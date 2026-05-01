@@ -1,5 +1,6 @@
-import { Button } from '#/components/ui/button'
-import { DataTable } from '#/components/ui/data-table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { DataTable } from '@/components/ui/data-table'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
@@ -15,7 +16,7 @@ type Order = {
   nextPayment: string
   amountDue: number
   dateInitiated: string
-  status: 'Active' | 'Delivered' | 'Pending' | 'Overdue'
+  status: 'active' | 'delivered' | 'pending' | 'overdue'
 }
 
 const data: Order[] = [
@@ -27,7 +28,7 @@ const data: Order[] = [
     nextPayment: 'Mar 15, 2026',
     amountDue: 154166,
     dateInitiated: 'Feb 10, 2026, 12:14pm',
-    status: 'Delivered',
+    status: 'delivered',
   },
   {
     id: '2',
@@ -37,7 +38,7 @@ const data: Order[] = [
     nextPayment: 'Feb 8, 2026',
     amountDue: 54166,
     dateInitiated: 'Feb 8, 2026, 1:02am',
-    status: 'Pending',
+    status: 'pending',
   },
   {
     id: '3',
@@ -47,7 +48,7 @@ const data: Order[] = [
     nextPayment: 'Mar 5, 2026',
     amountDue: 145833,
     dateInitiated: 'Feb 8, 2026, 07:31am',
-    status: 'Delivered',
+    status: 'delivered',
   },
   {
     id: '4',
@@ -57,7 +58,7 @@ const data: Order[] = [
     nextPayment: 'Mar 5, 2026',
     amountDue: 48333,
     dateInitiated: 'Feb 5, 2026, 3:06pm',
-    status: 'Delivered',
+    status: 'delivered',
   },
   {
     id: '5',
@@ -67,7 +68,7 @@ const data: Order[] = [
     nextPayment: 'Feb 3, 2026',
     amountDue: 800000,
     dateInitiated: 'Feb 5, 2026, 11:05am',
-    status: 'Pending',
+    status: 'pending',
   },
   {
     id: '6',
@@ -77,7 +78,7 @@ const data: Order[] = [
     nextPayment: 'Mar 1, 2026',
     amountDue: 54166,
     dateInitiated: 'Feb 1, 2026',
-    status: 'Delivered',
+    status: 'delivered',
   },
   {
     id: '7',
@@ -87,7 +88,7 @@ const data: Order[] = [
     nextPayment: 'Mar 1, 2026',
     amountDue: 62500,
     dateInitiated: 'Feb 1, 2026',
-    status: 'Delivered',
+    status: 'delivered',
   },
   {
     id: '8',
@@ -97,7 +98,7 @@ const data: Order[] = [
     nextPayment: 'Mar 1, 2026',
     amountDue: 43333,
     dateInitiated: 'Feb 1, 2026',
-    status: 'Pending',
+    status: 'pending',
   },
   {
     id: '9',
@@ -107,7 +108,7 @@ const data: Order[] = [
     nextPayment: 'Mar 1, 2026',
     amountDue: 40000,
     dateInitiated: 'Feb 1, 2026',
-    status: 'Pending',
+    status: 'pending',
   },
   {
     id: '10',
@@ -117,7 +118,7 @@ const data: Order[] = [
     nextPayment: 'Mar 1, 2026',
     amountDue: 7083,
     dateInitiated: 'Mar 1, 2026, 3:06pm',
-    status: 'Delivered',
+    status: 'delivered',
   },
 ]
 
@@ -127,13 +128,6 @@ const fmt = (n: number) =>
     currency: 'NGN',
     maximumFractionDigits: 0,
   }).format(n)
-
-const statusStyles: Record<string, string> = {
-  Active: 'bg-green-50 text-green-600',
-  Delivered: 'bg-green-50 text-green-600',
-  Pending: 'bg-yellow-50 text-yellow-600',
-  Overdue: 'bg-red-50 text-red-500',
-}
 
 const columnHelper = createColumnHelper<Order>()
 
@@ -187,15 +181,10 @@ const columns: ColumnDef<Order, any>[] = [
     header: 'Date & Time Initiated',
     cell: (i) => <span className="text-xs text-gray-500">{i.getValue()}</span>,
   }),
+
   columnHelper.accessor('status', {
     header: 'Status',
-    cell: (i) => (
-      <span
-        className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${statusStyles[i.getValue()]}`}
-      >
-        {i.getValue()}
-      </span>
-    ),
+    cell: (i) => <Badge status={i.getValue()} />,
   }),
   columnHelper.display({
     id: 'action',
@@ -208,19 +197,20 @@ const columns: ColumnDef<Order, any>[] = [
   }),
 ]
 
-type TabKey = 'All' | 'Delivered' | 'Pending'
+type TabKey = 'All' | 'delivered' | 'pending'
 
 function OrderHistoryPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('All')
   const [rowSelection, setRowSelection] = useState({})
 
-  const counts = useMemo(() => {
-    return {
+  const counts = useMemo(
+    () => ({
       All: data.length,
-      Delivered: data.filter((d) => d.status === 'Delivered').length,
-      Pending: data.filter((d) => d.status === 'Pending').length,
-    }
-  }, [])
+      delivered: data.filter((d) => d.status === 'delivered').length,
+      pending: data.filter((d) => d.status === 'pending').length,
+    }),
+    [],
+  )
 
   const filtered = useMemo(() => {
     if (activeTab === 'All') return data
@@ -240,8 +230,8 @@ function OrderHistoryPage() {
           description="View and track your purchases"
           tabs={[
             { label: 'All', value: 'All', count: counts.All },
-            { label: 'Delivered', value: 'Delivered', count: counts.Delivered },
-            { label: 'Pending', value: 'Pending', count: counts.Pending },
+            { label: 'Delivered', value: 'delivered', count: counts.delivered },
+            { label: 'Pending', value: 'pending', count: counts.pending },
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}

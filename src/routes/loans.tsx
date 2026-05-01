@@ -1,5 +1,6 @@
-import { Button } from '#/components/ui/button'
-import { DataTable } from '#/components/ui/data-table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { DataTable } from '@/components/ui/data-table'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
@@ -15,7 +16,7 @@ type Loan = {
   tenure: string
   firstPayment: string
   approvedDate: string
-  status: 'Active' | 'Overdue' | 'Repaid'
+  status: 'active' | 'overdue' | 'repaid'
 }
 
 const data: Loan[] = [
@@ -27,7 +28,7 @@ const data: Loan[] = [
     tenure: '12 months',
     firstPayment: 'Mar 7, 2026',
     approvedDate: 'Feb 11, 2026',
-    status: 'Active',
+    status: 'active',
   },
   {
     id: '2',
@@ -37,7 +38,7 @@ const data: Loan[] = [
     tenure: '6 months',
     firstPayment: 'Mar 3, 2026',
     approvedDate: 'Feb 7, 2026',
-    status: 'Overdue',
+    status: 'active',
   },
   {
     id: '3',
@@ -47,7 +48,7 @@ const data: Loan[] = [
     tenure: '6 months',
     firstPayment: 'Feb 7, 2026',
     approvedDate: 'Feb 7, 2026',
-    status: 'Repaid',
+    status: 'repaid',
   },
 ]
 
@@ -57,12 +58,6 @@ const fmt = (n: number) =>
     currency: 'NGN',
     maximumFractionDigits: 0,
   }).format(n)
-
-const statusStyles: Record<string, string> = {
-  Active: 'bg-green-50 text-green-600',
-  Overdue: 'bg-red-50 text-red-500',
-  Repaid: 'bg-blue-50 text-blue-600',
-}
 
 const columnHelper = createColumnHelper<Loan>()
 
@@ -114,15 +109,10 @@ const columns: ColumnDef<Loan, any>[] = [
     header: 'Approved Date',
     cell: (i) => <span className="text-xs text-gray-500">{i.getValue()}</span>,
   }),
+
   columnHelper.accessor('status', {
     header: 'Status',
-    cell: (i) => (
-      <span
-        className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${statusStyles[i.getValue()]}`}
-      >
-        {i.getValue()}
-      </span>
-    ),
+    cell: (i) => <Badge status={i.getValue()} />,
   }),
   columnHelper.display({
     id: 'action',
@@ -139,7 +129,7 @@ function LoanRecordPage() {
   const [rowSelection, setRowSelection] = useState({})
 
   const totalOutstanding = data
-    .filter((d) => d.status !== 'Repaid')
+    .filter((d) => d.status !== 'repaid')
     .reduce((s, d) => s + d.amount, 0)
 
   return (
@@ -154,7 +144,7 @@ function LoanRecordPage() {
             { label: 'Total Loans', value: data.length },
             {
               label: 'Active Loans',
-              value: data.filter((d) => d.status === 'Active').length,
+              value: data.filter((d) => d.status === 'active').length,
             },
             { label: 'Total Outstanding', value: fmt(totalOutstanding) },
           ].map((s) => (

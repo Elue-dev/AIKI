@@ -21,21 +21,28 @@ body {
 
 @font-face {
   font-family: 'SF Pro Display';
-  src: url('./assets/fonts/SF-Pro-Display-Regular.otf') format('opentype');
+  src: url('./assets/fonts/regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'SF Pro Display';
-  src: url('./assets/fonts/SF-Pro-Display-Medium.otf') format('opentype');
+  src: url('./assets/fonts/medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'SF Pro Display';
-  src: url('./assets/fonts/SF-Pro-Display-Bold.otf') format('opentype');
+  src: url('./assets/fonts/semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./assets/fonts/bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
 }

@@ -188,7 +188,7 @@ export function SummaryScreen({
         </div>
       </div>
 
-      <div className="bg-white px-6 py-4 border-t border-gray-100 flex items-center justify-between shrink-0">
+      <div className="bg-white px-6 py-4 border-t border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between shrink-0">
         <div className="bg-white rounded-2xl px-5 py-4">
           <p className="text-[14px] font-semibold text-black">Credit limit</p>
           <p className="text-[24px] font-semibold text-black">₦5,000,000.00</p>

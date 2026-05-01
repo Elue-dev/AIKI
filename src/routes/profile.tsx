@@ -63,8 +63,8 @@ function RouteComponent() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-4 gap-5">
-          <div className="col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div className="col-span-3 md:col-span-1">
             <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center text-center">
               <div className="relative mb-4">
                 <img src={Avatar} className="h-15 w-15 rounded-full" />

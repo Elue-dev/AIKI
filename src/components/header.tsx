@@ -33,6 +33,13 @@ function NavLink({
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isActive = to === '/' ? pathname === '/' : pathname.startsWith(to)
 
+  const mobileLabel =
+    label === 'Order History'
+      ? 'Orders'
+      : label === 'Loan Record'
+        ? 'Loans'
+        : label
+
   return (
     <Link
       to={to}
@@ -43,7 +50,10 @@ function NavLink({
       }
     >
       <img src={isActive ? iconFocused : icon} className="w-5 h-5" />
-      <span>{label}</span>
+
+      <span className="hidden md:inline">{label}</span>
+
+      <span className="md:hidden">{mobileLabel}</span>
     </Link>
   )
 }
@@ -52,15 +62,14 @@ export default function Header() {
   return (
     <header className="bg-background px-4 md:px-8 py-3">
       <div className="flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2 shrink-0">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-[10px] tracking-tight">
               AI
             </span>
           </div>
           <span className="font-semibold text-gray-900 text-sm">AIKI</span>
-        </div>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => (

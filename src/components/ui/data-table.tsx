@@ -115,7 +115,7 @@ export function DataTable<TData, TTab extends string = string>({
                         : 'text-gray-500 bg-[#F3F3F3]'
                     }`}
                   >
-                    {tab.value === 'All' ? 'All Items' : tab.label}
+                    {tab.label}
 
                     {tab.count !== undefined && (
                       <span
