@@ -106,7 +106,7 @@ function RouteComponent() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.12 }}
-              className="grid grid-cols-2 md:grid-cols-3 gap-2 gap-y-3 mx-4"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 gap-y-3 mx-4"
             >
               {paginated.map((vendor, i) => (
                 <motion.div
