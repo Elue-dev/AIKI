@@ -145,11 +145,11 @@ function LoanRecordPage() {
   return (
     <div className="min-h-screen bg-[#F4F4F4]">
       <main className="wrapper py-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+        <h1 className="text-[23px] md:text-[32px] font-semibold text-dark mb-4">
           Loan Record
         </h1>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {[
             { label: 'Total Loans', value: data.length },
             {

@@ -8,7 +8,6 @@ interface AppSheetProps {
   children: React.ReactNode
   width?: number
 }
-
 export function AppSheet({
   open,
   onClose,
@@ -16,11 +15,8 @@ export function AppSheet({
   width = 480,
 }: AppSheetProps) {
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
     return () => {
       document.body.style.overflow = ''
     }
@@ -47,19 +43,21 @@ export function AppSheet({
             className="fixed inset-0 z-50 bg-black/30"
             onClick={onClose}
           />
-
           <motion.div
             key="panel"
-            initial={{ x: width }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: width }}
+            exit={{ x: '100%' }}
             transition={{
               type: 'tween',
               duration: 0.22,
               ease: [0.32, 0.72, 0, 1],
             }}
-            className="fixed top-0 right-0 z-50 h-full flex flex-col bg-[#F4F4F4] overflow-hidden"
-            style={{ width, borderRadius: '16px 0 0 16px' }}
+            className="fixed top-0 right-0 z-50 h-full flex flex-col bg-[#F4F4F4] overflow-hidden w-full"
+            style={{
+              maxWidth: width,
+              borderRadius: '16px 0 0 16px',
+            }}
           >
             {children}
           </motion.div>

@@ -50,7 +50,9 @@ function RouteComponent() {
     <div className="min-h-screen bg-[#F4F4F4]">
       <main className="wrapper-sm py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[32px] font-semibold text-dark mb-4">Profile</h1>
+          <h1 className="text-[23px] md:text-[32px] font-semibold text-dark mb-4">
+            Profile
+          </h1>
           <Button
             onClick={() => {
               personalForm.handleSubmit()

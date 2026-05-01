@@ -1,17 +1,17 @@
 import { Button } from '@/components/ui/button'
+import { toast } from '@/lib/toast'
 import { useForm } from '@tanstack/react-form'
 import { AnimatePresence, motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { CircleX } from 'lucide-react'
 import { useState } from 'react'
 import { AppSheet } from '../ui/app-sheet'
+import { TypeToggle, type AssessmentType } from './common/type-toggle'
+import { GuarantorDirectorSignatory } from './steps/business.tsx/gurantor-director-signatory'
+import { OperationsAndContracts } from './steps/business.tsx/operation-contracts'
 import { BasicDetails } from './steps/personal/basic-details'
 import { EmploymentDetails } from './steps/personal/employment-details'
 import { FinancialObligations } from './steps/personal/financial-obligations'
 import { SupportingDocuments } from './steps/personal/supporting-documents'
-import { TypeToggle, type AssessmentType } from './common/type-toggle'
-import { OperationsAndContracts } from './steps/business.tsx/operation-contracts'
-import { GuarantorDirectorSignatory } from './steps/business.tsx/gurantor-director-signatory'
-import { toast } from '@/lib/toast'
 
 const TOTAL_STEPS: Record<AssessmentType, number> = {
   Personal: 4,
@@ -100,7 +100,15 @@ export function KYCVerificationSheet({
   }
 
   return (
-    <AppSheet open={open} onClose={() => onOpenChange(false)} width={520}>
+    <AppSheet
+      open={open}
+      onClose={() => {
+        onOpenChange(false)
+        setAssessmentType('Personal')
+        setStep(1)
+      }}
+      width={520}
+    >
       <div className="bg-white px-6 pt-6 pb-5 shrink-0">
         <div className="flex items-start justify-between mb-1.5">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -110,7 +118,7 @@ export function KYCVerificationSheet({
             onClick={() => onOpenChange(false)}
             className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5"
           >
-            <X size={16} />
+            <CircleX className="text-black cursor-pointer" size={20} />
           </button>
         </div>
         <p className="text-xs text-gray-400 leading-relaxed mb-5">

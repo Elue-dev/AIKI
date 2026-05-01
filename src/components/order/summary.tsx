@@ -1,6 +1,3 @@
-import { useState } from 'react'
-import { X, Check, Copy } from 'lucide-react'
-import type { Vendor } from '@/data/vendors'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -9,6 +6,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import type { Vendor } from '@/data/vendors'
+import { Check, CircleX, Copy } from 'lucide-react'
+import { useState } from 'react'
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -73,7 +73,7 @@ export function SummaryScreen({
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors mt-1"
           >
-            <X size={16} />
+            <CircleX className="text-black cursor-pointer" size={20} />
           </button>
         </div>
       </div>

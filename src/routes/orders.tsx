@@ -230,7 +230,7 @@ function OrderHistoryPage() {
   return (
     <div className="min-h-screen bg-[#F4F4F4]">
       <main className="wrapper py-8">
-        <h1 className="text-[32px] font-semibold text-dark mb-4">
+        <h1 className="text-[23px] md:text-[32px] font-semibold text-dark mb-4">
           Order History
         </h1>
 

@@ -77,7 +77,7 @@ export function DataTable<TData, TTab extends string = string>({
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       {(description || showExport) && (
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-b border-gray-100">
           {description && (
             <p className="text-sm text-gray-500">{description}</p>
           )}
@@ -85,7 +85,7 @@ export function DataTable<TData, TTab extends string = string>({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 rounded-lg ml-auto"
+              className="gap-1.5 rounded-lg mt-3 md:mt-0"
               onClick={onExport}
             >
               <Download size={13} /> Export CSV
@@ -95,7 +95,7 @@ export function DataTable<TData, TTab extends string = string>({
       )}
 
       {(tabs || showSearch) && (
-        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row items-center justify-between px-6 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
             {tabs &&
               onTabChange &&
@@ -134,7 +134,7 @@ export function DataTable<TData, TTab extends string = string>({
               })}
           </div>
           {showSearch && (
-            <div className="flex items-center gap-2 bg-[#F4F4F4] rounded-full px-3.5 py-2 w-60">
+            <div className="flex items-center gap-2 bg-[#F4F4F4] rounded-full px-3.5 py-2 w-60 mt-5 md:mt-0">
               <Search size={13} className="text-gray-400 shrink-0" />
               <input
                 value={search}
@@ -151,7 +151,7 @@ export function DataTable<TData, TTab extends string = string>({
       )}
 
       <div className="overflow-x-auto px-6">
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="border border-gray-200 rounded-lg">
           <table className="w-full border-separate border-spacing-0">
             <thead>
               {table.getHeaderGroups().map((hg) => (

@@ -50,10 +50,12 @@ function RouteComponent() {
         >
           ← Back to Home
         </Link>
-        <h1 className="text-[24px] font-bold text-black mb-6">Shop Vendors</h1>
+        <h1 className="text-[23px] md:text-[32px] font-semibold text-dark mb-6">
+          Shop Vendors
+        </h1>
 
         <div className="bg-white rounded-2xl overflow-hidden">
-          <div className="flex items-start justify-between px-6 pt-5 pb-4">
+          <div className="flex flex-col md:flex-row items-start justify-between px-6 pt-5 pb-4">
             <div>
               <h2 className="text-[16px] font-semibold text-dark">
                 Approved Vendors
@@ -63,7 +65,7 @@ function RouteComponent() {
                 and flexible payment terms on all purchases.
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-background rounded-full px-3.5 py-2 w-82">
+            <div className="flex items-center gap-2 bg-background rounded-full px-3.5 py-2 w-82 mt-3 md:mt-0">
               <Search size={13} className="text-gray-400 shrink-0" />
               <input
                 value={search}
