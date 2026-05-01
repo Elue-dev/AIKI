@@ -15,10 +15,7 @@ function filterVendors(list: Vendor[], category: string): Vendor[] {
 
 export function ApprovedVendors() {
   const [activeCategory, setActiveCategory] = useState('Trending')
-  const scrollRef = useRef<HTMLDivElement>(null)
-
   const filtered = filterVendors(vendors, activeCategory)
-
   const displayed: Vendor[] = Array.from(
     { length: 6 },
     (_, i) => filtered[i % filtered.length],
@@ -40,12 +37,13 @@ export function ApprovedVendors() {
         <Separator />
       </div>
 
-      <div className="flex items-center gap-2 px-5 mb-2 mt-3">
+      {/* Filters — scrollable on mobile */}
+      <div className="flex items-center gap-2 px-5 mb-2 mt-3 overflow-x-auto scrollbar-hide">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+            className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
               activeCategory === cat
                 ? 'bg-primary/10 text-primary'
                 : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
@@ -64,7 +62,7 @@ export function ApprovedVendors() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className="grid grid-cols-3 gap-2 gap-y-3 mx-4"
+            className="grid grid-cols-2 md:grid-cols-3 gap-2 gap-y-3 mx-4"
           >
             {displayed.map((vendor, i) => (
               <VendorCard key={`${activeCategory}-${i}`} {...vendor} />
@@ -77,7 +75,7 @@ export function ApprovedVendors() {
         to="/shop-vendors"
         className="flex items-center justify-end px-5 py-4 mt-2 border-t border-gray-50"
       >
-        <Button variant={'outline'} className="bg-muted">
+        <Button variant="outline" className="bg-muted">
           View More Products →
         </Button>
       </Link>

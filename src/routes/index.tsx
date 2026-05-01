@@ -38,11 +38,12 @@ function HomePage() {
   return (
     <div className="min-h-screen">
       <main className="wrapper py-10">
-        <h1 className="text-[28px] font-bold text-center text-gray-900 mb-5 tracking-tight">
+        <h1 className="text-[24px] md:text-[28px] font-bold text-center text-gray-900 mb-5 tracking-tight">
           Hey, Sani Francis
         </h1>
 
-        <div className="mx-24 flex items-center gap-3 bg-white border border-gray-200 rounded-full px-5 py-3 mb-7 shadow-sm">
+        {/* Search */}
+        <div className="mx-0 md:mx-12 lg:mx-24 flex items-center gap-3 bg-white border border-gray-200 rounded-full px-5 py-3 mb-7 shadow-sm">
           <Search size={15} className="text-gray-400 shrink-0" />
           <input
             type="text"
@@ -51,30 +52,27 @@ function HomePage() {
           />
         </div>
 
-        <div className="flex gap-6">
-          <div className="w-[48%] flex flex-col">
+        {/* Main layout — stacks on mobile, side by side on lg+ */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left column */}
+          <div className="w-full lg:w-[48%] flex flex-col gap-4">
             <QuickActions />
-
-            <div className="pt-4">
-              <PaymentsDueAlert
-                dueDate="30th April 2026"
-                bankName="Providus Bank"
-                accountName="AIKI Escrow Ltd"
-                accountNumber="1900045782"
-                onCopy={() => navigator.clipboard.writeText('1900045782')}
-                onPay={() => console.log('pay')}
-              />
-            </div>
-
-            <div className="pt-4">
-              <TransactionHistory
-                transactions={transactions}
-                onSeeAll={() => console.log('see all')}
-              />
-            </div>
+            <PaymentsDueAlert
+              dueDate="30th April 2026"
+              bankName="Providus Bank"
+              accountName="AIKI Escrow Ltd"
+              accountNumber="1900045782"
+              onCopy={() => navigator.clipboard.writeText('1900045782')}
+              onPay={() => console.log('pay')}
+            />
+            <TransactionHistory
+              transactions={transactions}
+              onSeeAll={() => console.log('see all')}
+            />
           </div>
 
-          <div className="w-[50%]">
+          {/* Right column */}
+          <div className="w-full lg:w-[52%]">
             <ApprovedVendors />
           </div>
         </div>

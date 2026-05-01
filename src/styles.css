@@ -188,6 +188,13 @@ body {
   margin: auto;
 }
 
-.go350417626 {
-  display: none;
+@media (max-width: 600px) {
+  .wrapper {
+    width: 95%;
+    margin: auto;
+  }
+
+  .wrapper-sm {
+    width: 95%;
+  }
 }

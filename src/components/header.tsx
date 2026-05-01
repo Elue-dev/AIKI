@@ -50,9 +50,10 @@ function NavLink({
 
 export default function Header() {
   return (
-    <header className="bg-background px-8 py-3">
+    <header className="bg-background px-4 md:px-8 py-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        {/* Logo */}
+        <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-[10px] tracking-tight">
               AI
@@ -61,21 +62,30 @@ export default function Header() {
           <span className="font-semibold text-gray-900 text-sm">AIKI</span>
         </div>
 
-        <nav className="flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => (
             <NavLink key={item.to} {...item} />
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
           <button className="w-9 h-9 rounded-full border border-violet-100 bg-white/70 flex items-center justify-center text-gray-500 hover:bg-white transition-colors">
             <img src={Bell} className="h-7 w-7 rounded-full" />
           </button>
           <Link to="/profile">
-            <img src={Avatar} className="h-10 w-10 rounded-full" />
+            <img
+              src={Avatar}
+              className="h-9 w-9 md:h-10 md:w-10 rounded-full"
+            />
           </Link>
         </div>
       </div>
+
+      <nav className="flex md:hidden items-center justify-center gap-1 mt-3 border-t border-gray-100 pt-3">
+        {navItems.map((item) => (
+          <NavLink key={item.to} {...item} />
+        ))}
+      </nav>
     </header>
   )
 }
