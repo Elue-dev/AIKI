@@ -40,7 +40,7 @@ const transactions = [
 
 function HomePage() {
   const auth = useAuthStore()
-  console.log('auth', auth.user)
+  // console.log('auth', auth.user)
 
   return (
     <div className="min-h-screen">

@@ -1,7 +1,7 @@
 import { Button } from '#/components/ui/button'
 import { Separator } from '#/components/ui/separator'
 import { VendorCard } from '#/components/vendor-card'
-import { vendors, type Vendor } from '#/data/vendors'
+import { useGetCatalogCategories, useGetCatalogDevices } from '#/stores/catalog'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Search } from 'lucide-react'
@@ -11,33 +11,34 @@ export const Route = createFileRoute('/_authenticated/shop-vendors')({
   component: RouteComponent,
 })
 
-const categories = ['Trending', 'Computing', 'Energy', 'Connectivity']
-const PAGE_SIZE = 10
-
-function filterVendors(list: Vendor[], category: string): Vendor[] {
-  if (category === 'Trending') return list
-  return list.filter((v) => v.category === category)
-}
-
-const allVendors: Vendor[] = Array.from(
-  { length: 12 },
-  (_, i) => vendors[i % vendors.length],
-)
+const PAGE_SIZE = 20
 
 function RouteComponent() {
-  const [activeCategory, setActiveCategory] = useState('Trending')
+  const [activeCategory, setActiveCategory] = useState<string | undefined>(
+    undefined,
+  )
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  const filtered = filterVendors(allVendors, activeCategory).filter((v) =>
-    v.name.toLowerCase().includes(search.toLowerCase()),
+  const { data: categoriesData = [] } = useGetCatalogCategories({ silent: true })
+  const { data: devicesData, isLoading } = useGetCatalogDevices(
+    activeCategory ? { category: activeCategory } : undefined,
+    { silent: true },
   )
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const allDevices = devicesData?.data ?? []
+  const meta = devicesData?.meta
+  const categories = [{ category: 'All', count: 0 }, ...categoriesData]
+
+  const filtered = allDevices.filter((d) =>
+    d.name.toLowerCase().includes(search.toLowerCase()),
+  )
+
+  const totalPages = Math.max(1, meta?.totalPages ?? 1)
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const handleCategoryChange = (cat: string) => {
-    setActiveCategory(cat)
+    setActiveCategory(cat === 'All' ? undefined : cat)
     setPage(1)
   }
 
@@ -83,53 +84,69 @@ function RouteComponent() {
             <Separator />
           </div>
 
-          <div className="flex items-center gap-2 px-6 py-4">
-            {categories.map((cat) => (
+          <div className="flex items-center gap-2 px-6 py-4 overflow-x-auto">
+            {categories.map(({ category }) => (
               <button
-                key={cat}
-                onClick={() => handleCategoryChange(cat)}
-                className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
-                  activeCategory === cat
+                key={category}
+                onClick={() => handleCategoryChange(category)}
+                className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                  (category === 'All' && !activeCategory) ||
+                  category === activeCategory
                     ? 'bg-primary/10 text-primary'
                     : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                {cat}
+                {category}
               </button>
             ))}
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategory}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 gap-y-3 mx-4"
-            >
-              {paginated.map((vendor, i) => (
-                <motion.div
-                  key={`${activeCategory}-${i}`}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.16,
-                    delay: i * 0.025,
-                    ease: 'easeOut',
-                  }}
-                >
-                  <VendorCard {...vendor} />
-                </motion.div>
+          {isLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 gap-y-3 mx-4 mb-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-52 rounded-[14px] bg-gray-100 animate-pulse"
+                />
               ))}
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          ) : paginated.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-12">
+              No devices found
+            </p>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory ?? 'all'}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 gap-y-3 mx-4"
+              >
+                {paginated.map((device, i) => (
+                  <motion.div
+                    key={device.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.16,
+                      delay: i * 0.025,
+                      ease: 'easeOut',
+                    }}
+                  >
+                    <VendorCard device={device} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
 
           <div className="flex items-center justify-between px-6 py-4 mt-4 border-t border-gray-50">
             <p className="text-xs text-gray200">
-              Showing {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
-              {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}{' '}
-              entries
+              {meta
+                ? `Showing ${filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, meta.total)} of ${meta.total} entries`
+                : ''}
             </p>
             <div className="flex items-center gap-1.5">
               <Button

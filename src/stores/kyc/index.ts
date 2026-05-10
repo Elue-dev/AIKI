@@ -8,31 +8,33 @@ import {
   submitKycStep,
 } from './api'
 import type { KycDocumentPayload } from './types'
+import { withSlowRequestTracking } from '@/helpers/track-slow-requests'
 
 export const KYC_KEYS = {
   status: ['kyc', 'status'] as const,
 }
 
 /** Returns the full KycStatusResponse (submission + steps field data) */
-export function useKycStatus() {
+export function useKycStatus(options?: { silent?: boolean }) {
   return useQuery({
     queryKey: KYC_KEYS.status,
-    queryFn: getKycStatus,
+    queryFn: () => withSlowRequestTracking(() => getKycStatus(), options),
     select: (res) => res.data,
   })
 }
 
-export function useStartKyc() {
+export function useStartKyc(options?: { silent?: boolean }) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (type: 'PERSONAL' | 'BUSINESS') => startKyc(type),
+    mutationFn: (type: 'PERSONAL' | 'BUSINESS') =>
+      withSlowRequestTracking(() => startKyc(type), options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: KYC_KEYS.status })
     },
   })
 }
 
-export function useSubmitKycStep() {
+export function useSubmitKycStep(options?: { silent?: boolean }) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({
@@ -41,29 +43,31 @@ export function useSubmitKycStep() {
     }: {
       stepNumber: number
       data: Record<string, unknown>
-    }) => submitKycStep(stepNumber, data),
+    }) => withSlowRequestTracking(() => submitKycStep(stepNumber, data), options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: KYC_KEYS.status })
     },
   })
 }
 
-export function useRegisterKycDocument() {
+export function useRegisterKycDocument(options?: { silent?: boolean }) {
   return useMutation({
-    mutationFn: (payload: KycDocumentPayload) => registerKycDocument(payload),
+    mutationFn: (payload: KycDocumentPayload) =>
+      withSlowRequestTracking(() => registerKycDocument(payload), options),
   })
 }
 
-export function useDeleteKycDocument() {
+export function useDeleteKycDocument(options?: { silent?: boolean }) {
   return useMutation({
-    mutationFn: (id: string) => deleteKycDocument(id),
+    mutationFn: (id: string) =>
+      withSlowRequestTracking(() => deleteKycDocument(id), options),
   })
 }
 
-export function useSubmitKyc() {
+export function useSubmitKyc(options?: { silent?: boolean }) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: submitKyc,
+    mutationFn: () => withSlowRequestTracking(() => submitKyc(), options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: KYC_KEYS.status })
     },

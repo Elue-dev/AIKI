@@ -5,6 +5,7 @@ import type {
   InternalAxiosRequestConfig,
 } from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from './toast'
 
 let isRefreshing = false
 let failedQueue: {
@@ -89,7 +90,8 @@ export async function responseErrorInterceptor(
           { withCredentials: true },
         )
 
-        const newToken: string = data?.data?.access_token ?? data?.data?.accessToken
+        const newToken: string =
+          data?.data?.access_token ?? data?.data?.accessToken
         const newRefreshToken: string | undefined =
           data?.data?.refresh_token ?? data?.data?.refreshToken
         useAuthStore.getState().setAccessToken(newToken)
@@ -102,6 +104,10 @@ export async function responseErrorInterceptor(
       } catch (err) {
         processQueue(err, null)
         useAuthStore.getState().logout()
+        toast.error({
+          title: 'Session Expired',
+          description: 'Please login again',
+        })
         reject(err)
       } finally {
         isRefreshing = false

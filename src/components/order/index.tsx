@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import type { Vendor } from '@/data/vendors'
+import type { CatalogDevice } from '@/stores/catalog/types'
+import type { ClientOrder } from '@/stores/orders/types'
 import { AppSheet } from '@/components/ui/app-sheet'
 import { SummaryScreen } from './summary'
 import { ConfirmedScreen } from './confirmation'
@@ -10,17 +11,18 @@ type Screen = 'summary' | 'confirmed'
 interface OrderSummarySheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  vendor: Vendor | null
+  device: CatalogDevice | null
 }
 
 export function OrderSummarySheet({
   open,
   onOpenChange,
-  vendor,
+  device,
 }: OrderSummarySheetProps) {
   const [screen, setScreen] = useState<Screen>('summary')
   const [tenure, setTenure] = useState('')
   const [agreed, setAgreed] = useState(false)
+  const [createdOrder, setCreatedOrder] = useState<ClientOrder | null>(null)
 
   const handleClose = () => {
     onOpenChange(false)
@@ -28,10 +30,16 @@ export function OrderSummarySheet({
       setScreen('summary')
       setTenure('')
       setAgreed(false)
+      setCreatedOrder(null)
     }, 300)
   }
 
-  if (!vendor) return null
+  const handleConfirm = (order: ClientOrder) => {
+    setCreatedOrder(order)
+    setScreen('confirmed')
+  }
+
+  if (!device) return null
 
   return (
     <AppSheet open={open} onClose={handleClose} width={480}>
@@ -46,16 +54,16 @@ export function OrderSummarySheet({
             className="flex flex-col h-full"
           >
             <SummaryScreen
-              vendor={vendor}
+              device={device}
               tenure={tenure}
               onTenureChange={setTenure}
               agreed={agreed}
               onAgreeChange={setAgreed}
-              onConfirm={() => setScreen('confirmed')}
+              onConfirm={handleConfirm}
               onCancel={handleClose}
             />
           </motion.div>
-        ) : (
+        ) : createdOrder ? (
           <motion.div
             key="confirmed"
             initial={{ opacity: 0, scale: 0.98 }}
@@ -65,13 +73,12 @@ export function OrderSummarySheet({
             className="flex flex-col h-full"
           >
             <ConfirmedScreen
-              vendor={vendor}
-              tenure={tenure}
+              order={createdOrder}
               onViewOrders={handleClose}
               onDone={handleClose}
             />
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </AppSheet>
   )

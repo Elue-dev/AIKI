@@ -2,17 +2,25 @@ import { useLoaderStore } from '@/stores/loader'
 
 const SLOW_THRESHOLD_MS = 4000
 
+export interface SlowRequestOptions {
+  silent?: boolean
+  slowThreshold?: number
+}
+
 export async function withSlowRequestTracking<T>(
   fn: () => Promise<T>,
-  slowThreshold = SLOW_THRESHOLD_MS,
+  options?: SlowRequestOptions,
 ): Promise<T> {
+  if (options?.silent) return fn()
+
   const { setShowLoader, setShowSlowMessage } = useLoaderStore.getState()
+  const threshold = options?.slowThreshold ?? SLOW_THRESHOLD_MS
 
   setShowLoader(true)
 
   const slowTimer = setTimeout(() => {
     setShowSlowMessage(true)
-  }, slowThreshold)
+  }, threshold)
 
   try {
     return await fn()

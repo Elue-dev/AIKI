@@ -6,9 +6,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Vendor } from '@/data/vendors'
-import { Check, CircleX, Copy } from 'lucide-react'
-import { useState } from 'react'
+import type { CatalogDevice } from '@/stores/catalog/types'
+import type { ClientOrder, OrderCalculation } from '@/stores/orders/types'
+import { useCalculateOrder, useCreateOrder } from '@/stores/orders'
+import { toast } from '@/lib/toast'
+import { Check, CircleX, Copy, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -34,17 +37,17 @@ function CopyButton({ text }: { text: string }) {
 const ACCOUNT_NUMBER = '1900045782'
 
 interface SummaryScreenProps {
-  vendor: Vendor
+  device: CatalogDevice
   tenure: string
   onTenureChange: (v: string) => void
   agreed: boolean
   onAgreeChange: (v: boolean) => void
-  onConfirm: () => void
+  onConfirm: (order: ClientOrder) => void
   onCancel: () => void
 }
 
 export function SummaryScreen({
-  vendor,
+  device,
   tenure,
   onTenureChange,
   agreed,
@@ -52,13 +55,59 @@ export function SummaryScreen({
   onConfirm,
   onCancel,
 }: SummaryScreenProps) {
-  const rawPrice = parseFloat(
-    vendor.price.replace('₦', '').replace('K', '000').replace(',', ''),
-  )
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [calcResult, setCalcResult] = useState<OrderCalculation | null>(null)
+
+  const { mutate: calculate, isPending: isCalculating } = useCalculateOrder({
+    silent: true,
+  })
+  const { mutateAsync: createOrder, isPending: isCreating } = useCreateOrder()
+
+  useEffect(() => {
+    if (!tenure) return
+    setCalcResult(null)
+    calculate(
+      { tenure: parseInt(tenure), deviceId: device.id, quantity: 1 },
+      {
+        onSuccess: (res) => setCalcResult(res),
+        onError: (err: any) => {
+          setCalcResult(null)
+          toast.error({
+            title: 'Could not calculate order',
+            description: err?.message ?? 'Please try a different tenure.',
+          })
+        },
+      },
+    )
+  }, [tenure, device.id])
+
+  const rawPrice = device.priceKobo / 100
   const deposit = rawPrice * 0.1
-  const tenureMonths = parseInt(tenure) || 12
-  const interestRate = tenureMonths <= 6 ? 0 : 0.05
-  const total = rawPrice + rawPrice * interestRate
+  const tenureMonths = parseInt(tenure) || 0
+
+  const displayPrice = calcResult ? calcResult.unitPriceKobo / 100 : rawPrice
+  const displayTotal = calcResult ? calcResult.totalRepayableKobo / 100 : null
+  const displayMonthly = calcResult ? calcResult.monthlyPaymentKobo / 100 : null
+  const displayInterest = calcResult ? calcResult.interestRateBps / 100 : null
+  const displayFirstPayment = calcResult?.firstPaymentDate ?? null
+
+  const handleConfirm = async () => {
+    if (!tenure || !deliveryAddress.trim()) return
+    try {
+      const order = await createOrder({
+        tenure: parseInt(tenure),
+        deviceId: device.id,
+        quantity: 1,
+        deliveryAddress: deliveryAddress.trim(),
+      })
+      onConfirm(order)
+    } catch (err: any) {
+      toast.error({
+        title: 'Order failed',
+        description: err?.message ?? 'Something went wrong, please try again.',
+      })
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -83,7 +132,7 @@ export function SummaryScreen({
           <p className="text-[14px] text-dark font-semibold mb-1">
             Selected item
           </p>
-          <p className="text-[20px] font-semibold text-dark">{vendor.name}</p>
+          <p className="text-[20px] font-semibold text-dark">{device.name}</p>
         </div>
 
         <div className="bg-background rounded-2xl border border-gray-100 px-5 py-4">
@@ -118,26 +167,75 @@ export function SummaryScreen({
           </div>
         </div>
 
+        <div className="bg-background rounded-2xl border border-gray-100 px-5 py-4">
+          <p className="text-[16px] font-semibold text-black mb-3">
+            Delivery address
+          </p>
+          <textarea
+            value={deliveryAddress}
+            onChange={(e) => setDeliveryAddress(e.target.value)}
+            placeholder="Enter your delivery address"
+            rows={2}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+
         <div className="bg-white  px-5 py-4 space-y-3">
-          {[
-            { label: 'Item Price', value: `₦${rawPrice.toLocaleString()}.00` },
-            { label: 'Repayment tenure', value: `${tenureMonths} months` },
-            {
-              label: `Interest for first ${tenureMonths} months`,
-              value: interestRate === 0 ? '0%' : `${interestRate * 100}%`,
-            },
-            {
-              label: 'Total',
-              value: `₦${total.toLocaleString()}.00`,
-            },
-          ].map((row) => (
-            <div key={row.label} className="flex items-center justify-between">
-              <span className="text-[14px] text-black">{row.label}</span>
-              <span className="text-[16px] text-[#151D0C] font-semibold">
-                {row.value}
-              </span>
+          {isCalculating ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="animate-spin text-primary" size={20} />
             </div>
-          ))}
+          ) : (
+            [
+              {
+                label: 'Item Price',
+                value: `₦${displayPrice.toLocaleString()}.00`,
+              },
+              {
+                label: 'Repayment tenure',
+                value: tenureMonths ? `${tenureMonths} months` : '—',
+              },
+              {
+                label: 'Interest rate',
+                value: displayInterest !== null ? `${displayInterest}%` : '—',
+              },
+              {
+                label: 'Monthly payment',
+                value:
+                  displayMonthly !== null
+                    ? `₦${displayMonthly.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                    : '—',
+              },
+              ...(displayFirstPayment
+                ? [
+                    {
+                      label: 'First payment date',
+                      value: new Date(displayFirstPayment).toLocaleDateString(
+                        'en-NG',
+                        { dateStyle: 'medium' },
+                      ),
+                    },
+                  ]
+                : []),
+              {
+                label: 'Total repayable',
+                value:
+                  displayTotal !== null
+                    ? `₦${displayTotal.toLocaleString()}.00`
+                    : '—',
+              },
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="flex items-center justify-between"
+              >
+                <span className="text-[14px] text-black">{row.label}</span>
+                <span className="text-[16px] text-[#151D0C] font-semibold">
+                  {row.value}
+                </span>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="bg-background rounded-2xl border border-gray-100 px-5 py-4">
@@ -204,11 +302,20 @@ export function SummaryScreen({
           </Button>
 
           <Button
-            onClick={onConfirm}
-            disabled={!agreed || !tenure}
+            onClick={handleConfirm}
+            disabled={
+              !agreed || !tenure || !deliveryAddress.trim() || isCreating
+            }
             className="rounded-full px-6"
           >
-            Confirm order
+            {isCreating ? (
+              <>
+                <Loader2 className="animate-spin mr-2" size={14} />
+                Placing order…
+              </>
+            ) : (
+              'Confirm order'
+            )}
           </Button>
         </div>
       </div>

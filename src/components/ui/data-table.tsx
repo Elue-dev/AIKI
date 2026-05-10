@@ -22,6 +22,8 @@ type Tab<T extends string> = {
 interface DataTableProps<TData, TTab extends string = string> {
   data: TData[]
   columns: ColumnDef<TData, any>[]
+  isLoading?: boolean
+  skeletonRows?: number
 
   description?: string
   showExport?: boolean
@@ -43,6 +45,8 @@ interface DataTableProps<TData, TTab extends string = string> {
 export function DataTable<TData, TTab extends string = string>({
   data,
   columns,
+  isLoading = false,
+  skeletonRows = 6,
   description,
   showExport = false,
   onExport,
@@ -168,7 +172,22 @@ export function DataTable<TData, TTab extends string = string>({
               ))}
             </thead>
             <tbody>
-              {hasRows ? (
+              {isLoading ? (
+                Array.from({ length: skeletonRows }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100">
+                    {columns.map((_, j) => (
+                      <td
+                        key={j}
+                        className="px-4 py-3.5 whitespace-nowrap border-b border-gray-100 border-r last:border-r-0"
+                      >
+                        <div
+                          className={`h-3.5 rounded-full bg-gray-200 animate-pulse ${j === 0 ? 'w-4' : j === columns.length - 1 ? 'w-12' : 'w-24'}`}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : hasRows ? (
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}

@@ -1,25 +1,26 @@
 import { VendorCard } from '@/components/vendor-card'
-import { vendors, type Vendor } from '@/data/vendors'
+import { useGetCatalogCategories, useGetCatalogDevices } from '@/stores/catalog'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Separator } from '../ui/separator'
 import { Button } from '../ui/button'
 import { Link } from '@tanstack/react-router'
 
-const categories = ['Trending', 'Computing', 'Energy', 'Connectivity']
-
-function filterVendors(list: Vendor[], category: string): Vendor[] {
-  if (category === 'Trending') return list
-  return list.filter((v) => v.category === category)
-}
-
 export function ApprovedVendors() {
-  const [activeCategory, setActiveCategory] = useState('Trending')
-  const filtered = filterVendors(vendors, activeCategory)
-  const displayed: Vendor[] = Array.from(
-    { length: 6 },
-    (_, i) => filtered[i % filtered.length],
+  const [activeCategory, setActiveCategory] = useState<string | undefined>(
+    undefined,
   )
+  const { data: categoriesData = [] } = useGetCatalogCategories({
+    silent: true,
+  })
+  const { data: devicesData, isLoading } = useGetCatalogDevices(
+    activeCategory ? { category: activeCategory } : undefined,
+    { silent: true },
+  )
+
+  const devices = devicesData?.data ?? []
+  const displayed = devices.slice(0, 6)
+  const categories = [{ category: 'All', count: 0 }, ...categoriesData]
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
@@ -37,48 +38,67 @@ export function ApprovedVendors() {
         <Separator />
       </div>
 
-      {/* Filters — scrollable on mobile */}
       <div className="flex items-center gap-2 px-5 mb-2 mt-3 overflow-x-auto scrollbar-hide">
-        {categories.map((cat) => (
+        {categories.map(({ category }) => (
           <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
+            key={category}
+            onClick={() =>
+              setActiveCategory(category === 'All' ? undefined : category)
+            }
             className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
-              activeCategory === cat
+              (category === 'All' && !activeCategory) ||
+              category === activeCategory
                 ? 'bg-primary/10 text-primary'
                 : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
             }`}
           >
-            {cat}
+            {category}
           </button>
         ))}
       </div>
 
       <div className="relative mt-2 mb-4">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeCategory}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-2 gap-y-3 mx-4"
-          >
-            {displayed.map((vendor, i) => (
-              <VendorCard key={`${activeCategory}-${i}`} {...vendor} />
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 gap-y-3 mx-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-52 rounded-[14px] bg-gray-100 animate-pulse"
+              />
             ))}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ) : displayed.length === 0 ? (
+          <p className="text-center text-xs text-gray-400 py-8">
+            No devices available
+          </p>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategory ?? 'all'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="grid grid-cols-2 md:grid-cols-3 gap-2 gap-y-3 mx-4"
+            >
+              {displayed.map((device) => (
+                <VendorCard key={device.id} device={device} />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
 
-      <Link
-        to="/shop-vendors"
-        className="flex items-center justify-end px-5 py-4 mt-2 border-t border-gray-50"
-      >
-        <Button variant="outline" className="bg-muted">
-          View More Products →
-        </Button>
-      </Link>
+      {!isLoading && devicesData && devicesData.data.length > 0 && (
+        <Link
+          to="/shop-vendors"
+          className="flex items-center justify-end px-5 py-4 mt-2 border-t border-gray-50"
+        >
+          <Button variant="outline" className="bg-muted">
+            View More Products →
+          </Button>
+        </Link>
+      )}
     </div>
   )
 }

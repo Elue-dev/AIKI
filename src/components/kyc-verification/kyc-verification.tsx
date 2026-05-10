@@ -115,7 +115,7 @@ export function KYCVerificationSheet({
   const { mutateAsync: registerDocument } = useRegisterKycDocument()
   const { mutateAsync: deleteDocument } = useDeleteKycDocument()
   const { mutateAsync: submitKyc } = useSubmitKyc()
-  const { data: kycData, refetch: refetchKyc } = useKycStatus()
+  const { data: kycData, refetch: refetchKyc } = useKycStatus({ silent: true })
   const kycSubmission = kycData?.submission
   const setShowLoader = useLoaderStore((s) => s.setShowLoader)
 
@@ -148,12 +148,9 @@ export function KYCVerificationSheet({
       kycSubmission.type === 'PERSONAL' ? 'Personal' : 'Business'
     setAssessmentType(type)
 
-    const resumeStep = Math.min(
-      kycSubmission.currentStep + 1,
-      TOTAL_STEPS[type],
-    )
-    setStep(resumeStep)
-    setMaxReachedStep(resumeStep)
+    const maxStep = Math.min(kycSubmission.currentStep + 1, TOTAL_STEPS[type])
+    setMaxReachedStep(maxStep)
+    // Always start from step 1 — user navigates forward manually
 
     const steps = kycSubmission.stepData as
       | Record<string, Record<string, unknown>>
@@ -470,7 +467,7 @@ export function KYCVerificationSheet({
           ID, and a selfie. Your information is encrypted and processed
           securely.
         </p>
-        <TypeToggle value={assessmentType} onChange={handleTypeChange} />
+        <TypeToggle value={assessmentType} onChange={handleTypeChange} disabled={!!kycSubmission} />
 
         {/* Step indicator */}
         <div className="flex items-center mt-4">

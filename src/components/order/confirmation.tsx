@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
-import type { Vendor } from '@/data/vendors'
+import type { ClientOrder } from '@/stores/orders/types'
 import { Button } from '@/components/ui/button'
 import { Separator } from '../ui/separator'
 import { Link } from '@tanstack/react-router'
@@ -27,31 +27,18 @@ function CopyButton({ text }: { text: string }) {
 }
 
 interface ConfirmedScreenProps {
-  vendor: Vendor
-  tenure: string
+  order: ClientOrder
   onViewOrders: () => void
   onDone: () => void
 }
 
 export function ConfirmedScreen({
-  vendor,
-  tenure,
+  order,
   onViewOrders,
   onDone,
 }: ConfirmedScreenProps) {
-  const rawPrice = parseFloat(
-    vendor.price.replace('₦', '').replace('K', '000').replace(',', ''),
-  )
-  const tenureMonths = parseInt(tenure) || 12
-  const interestRate = tenureMonths <= 6 ? 0 : 0.05
-  const total = rawPrice + rawPrice * interestRate
-  const monthlyPayment = total / tenureMonths
-
-  const orderRef = useMemo(() => {
-    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const rand = Math.floor(Math.random() * 90000) + 10000
-    return `ORD-${date}-${rand}`
-  }, [])
+  const monthlyPayment = order.monthlyPaymentKobo / 100
+  const total = order.totalPaymentKobo / 100
 
   return (
     <div className="flex flex-col h-full">
@@ -66,7 +53,8 @@ export function ConfirmedScreen({
             Your order is being processed
           </h3>
           <p className="text-[14px] text-black font-semibold">
-            We'll notify you once your {vendor.name} is ready for delivery.
+            We'll notify you once your {order.device.name} is ready for
+            delivery.
           </p>
         </div>
 
@@ -76,15 +64,14 @@ export function ConfirmedScreen({
           </p>
           <div className="space-y-3 bg-white rounded-2xl px-5 py-3">
             {[
-              { label: 'Item', value: `${vendor.name}` },
+              { label: 'Item', value: order.device.name },
               {
                 label: 'Payment plan',
-                value: `₦${monthlyPayment.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+                value: `₦${monthlyPayment.toLocaleString(undefined, { maximumFractionDigits: 2 })}/month`,
               },
-              { label: 'Repayment tenure', value: `${tenureMonths} months` },
               {
-                label: `Interest for first ${tenureMonths} months`,
-                value: interestRate === 0 ? '0%' : `${interestRate * 100}%`,
+                label: 'Repayment tenure',
+                value: `${order.tenure} months`,
               },
             ].map((row) => (
               <>
@@ -105,9 +92,9 @@ export function ConfirmedScreen({
               <span className="text-[14px] text-black">Order reference</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-[16px] font-medium text-[#151D0C]">
-                  {orderRef}
+                  {order.orderNumber}
                 </span>
-                <CopyButton text={orderRef} />
+                <CopyButton text={order.orderNumber} />
               </div>
             </div>
 
