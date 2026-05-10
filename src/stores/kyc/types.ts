@@ -67,7 +67,6 @@ export interface BusinessSteps {
 export interface KycStatusResponse {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
   submission: KycSubmission | null
-  steps?: PersonalSteps | BusinessSteps
 }
 
 /** The submission object */
@@ -78,10 +77,11 @@ export interface KycSubmission {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
   currentStep: number
   totalSteps: number
-  /** Step completion markers e.g. { "0": "complete", "1": "complete" } */
-  stepData: Record<string, 'complete'>
+  /** Step data — each key is a step index, value is the field data for that step */
+  stepData: Record<string, Record<string, unknown>>
   bvnVerified: boolean
   submittedAt: string | null
+  reviewedByAdminId: string | null
   reviewNote: string | null
   reviewedAt: string | null
   createdAt: string
@@ -106,12 +106,14 @@ export interface KycDocumentPayload {
 }
 
 export type KycDocumentType =
-  | 'ID_CARD'
-  | 'UTILITY_BILL'
-  | 'BANK_STATEMENT'
   | 'PAYSLIP'
+  | 'BANK_STATEMENT'
+  | 'GOVERNMENT_ID'
+  | 'PROOF_OF_ADDRESS'
   | 'EMPLOYMENT_LETTER'
   | 'CRC_CONSENT'
   | 'DIRECTOR_ID'
   | 'BOARD_RESOLUTION'
   | 'DIRECTOR_BANK_STATEMENT'
+  | 'PROFILE_PHOTO'
+  | 'OTHER'

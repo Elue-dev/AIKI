@@ -1,4 +1,5 @@
 import { ApprovedVendors } from '#/components/home/approved-vendors'
+import { EmailVerificationBanner } from '#/components/home/email-verification-banner'
 import { PaymentsDueAlert } from '#/components/home/payment-due-alert'
 import { QuickActions } from '#/components/home/quick-actions'
 import { TransactionHistory } from '#/components/transaction-history'
@@ -47,6 +48,8 @@ function HomePage() {
         <h1 className="text-[24px] md:text-[28px] font-bold text-center text-gray-900 mb-5 tracking-tight">
           Hey, {auth.user?.firstName} {auth.user?.lastName}
         </h1>
+
+        <EmailVerificationBanner />
 
         <div className="mx-0 md:mx-12 lg:mx-24 flex items-center gap-3 bg-white border border-gray-200 rounded-full px-5 py-3 mb-7 shadow-sm">
           <Search size={15} className="text-gray-400 shrink-0" />

@@ -11,8 +11,8 @@ interface Props {
 const PERSONAL_DOCS: { type: string; label: string; description?: string; required?: boolean }[] = [
   { type: 'PAYSLIP', label: '3 months payslips', description: 'Most recent, stamped by employer' },
   { type: 'BANK_STATEMENT', label: '6 months bank statement', description: 'Official PDF from bank with salary inflows visible' },
-  { type: 'ID_CARD', label: 'Valid government ID', description: "NIN slip, international passport, or driver's licence" },
-  { type: 'UTILITY_BILL', label: 'Proof of address', description: 'Utility bill or bank statement showing address (3 months+)' },
+  { type: 'GOVERNMENT_ID', label: 'Valid government ID', description: "NIN slip, international passport, or driver's licence" },
+  { type: 'PROOF_OF_ADDRESS', label: 'Proof of address', description: 'Utility bill or bank statement showing address (3 months+)' },
   { type: 'EMPLOYMENT_LETTER', label: 'Employment confirmation letter', required: false },
   { type: 'CRC_CONSENT', label: 'CRC / CreditRegistry consent', description: 'Signed consent for bureau pull', required: false },
 ]

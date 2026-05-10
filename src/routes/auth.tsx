@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth'
 import { useEffect } from 'react'
 
@@ -9,14 +9,16 @@ export const Route = createFileRoute('/auth')({
 function AuthLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const navigate = useNavigate()
+  const { location } = useRouterState()
+  const isVerifyPath = location.pathname === '/auth/verify'
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isVerifyPath) {
       navigate({ to: '/', replace: true })
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, isVerifyPath])
 
-  if (isAuthenticated) return null
+  if (isAuthenticated && !isVerifyPath) return null
 
   return <Outlet />
 }

@@ -29,12 +29,15 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken: token, isAuthenticated: true })
       },
       setUser: (user) => set({ user }),
+      setPendingEmail: (email) => set({ pendingEmail: email }),
       setPendingVerification: (email, token, refreshToken) =>
         set({ pendingEmail: email, pendingToken: token, pendingRefreshToken: refreshToken ?? null }),
       confirmVerified: () =>
         set((s) => ({
-          accessToken: s.pendingToken,
-          refreshToken: s.pendingRefreshToken,
+          // only promote pending tokens when we're not already authenticated
+          ...(s.pendingToken
+            ? { accessToken: s.pendingToken, refreshToken: s.pendingRefreshToken }
+            : {}),
           isAuthenticated: true,
           pendingEmail: null,
           pendingToken: null,
@@ -95,13 +98,17 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const setPendingVerification = useAuthStore((s) => s.setPendingVerification)
+  const setTokens = useAuthStore((s) => s.setTokens)
+  const setUser = useAuthStore((s) => s.setUser)
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail)
 
   return useMutation({
     mutationFn: (payload: RegisterPayload) =>
       withSlowRequestTracking(() => authApi.register(payload)),
     onSuccess: (res) => {
-      setPendingVerification(res.data.user.email, res.data.accessToken, res.data.refreshToken)
+      setTokens(res.data.accessToken, res.data.refreshToken)
+      setUser(res.data.user)
+      setPendingEmail(res.data.user.email)
     },
   })
 }
@@ -134,6 +141,13 @@ export function useLogout() {
       logout()
       queryClient.clear()
     },
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (email: string) =>
+      withSlowRequestTracking(() => authApi.resendVerification({ email })),
   })
 }
 

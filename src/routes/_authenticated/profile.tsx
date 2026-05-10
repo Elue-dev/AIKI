@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import FormInput from '@/components/ui/form/form-input'
+import FormDatePicker from '@/components/ui/form/form-date-picker'
 import Avatar from '@/assets/img/avatar.png'
 import { KYCVerificationSheet } from '@/components/kyc-verification/kyc-verification'
 import { useForm } from '@tanstack/react-form'
@@ -155,12 +156,11 @@ function RouteComponent() {
                   disabled={!editingPersonal}
                 />
                 <div className="grid grid-cols-2 gap-3">
-                  <FormInput
+                  <FormDatePicker
                     form={personalForm}
                     name="dob"
                     label="Date of birth"
-                    placeholder="14/08/1990"
-                    type="date"
+                    placeholder="Pick date of birth"
                     validator={{}}
                     disabled={!editingPersonal}
                   />

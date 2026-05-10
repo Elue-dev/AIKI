@@ -20,6 +20,7 @@ export interface AuthState {
   setTokens: (accessToken: string, refreshToken: string) => void
   setAccessToken: (token: string) => void
   setUser: (user: User) => void
+  setPendingEmail: (email: string) => void
   setPendingVerification: (email: string, token: string, refreshToken?: string) => void
   confirmVerified: () => void
   logout: () => void

@@ -1,4 +1,5 @@
 import FormInput from '@/components/ui/form/form-input'
+import FormDatePicker from '@/components/ui/form/form-date-picker'
 import { SectionHeader } from '../../common/section-header'
 import { validators } from '@/helpers/validators'
 
@@ -20,12 +21,11 @@ export function BasicDetails({ form, totalSteps }: Props) {
         required
       />
       <div className="grid grid-cols-2 gap-3">
-        <FormInput
+        <FormDatePicker
           form={form}
           name="dateOfBirth"
           label="Date of birth"
-          placeholder="dd/mm/yyyy"
-          type="date"
+          placeholder="Pick date of birth"
           validator={validators.required('Date of birth')}
           required
         />

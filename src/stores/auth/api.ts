@@ -32,3 +32,6 @@ export const forgotPassword = (payload: ForgotPasswordPayload): Promise<void> =>
 
 export const resetPassword = (payload: ResetPasswordPayload): Promise<void> =>
   client.post('/auth/reset-password', payload)
+
+export const resendVerification = (payload: { email: string }): Promise<void> =>
+  client.post('/auth/resend-verification', payload)

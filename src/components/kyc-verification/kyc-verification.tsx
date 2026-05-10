@@ -13,7 +13,7 @@ import type { KycDocumentType } from '@/stores/kyc/types'
 import { useLoaderStore } from '@/stores/loader'
 import { useForm } from '@tanstack/react-form'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CircleX } from 'lucide-react'
+import { CircleX, AlertCircle, CheckCircle2, Info, XCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/button'
 import { AppSheet } from '../ui/app-sheet'
@@ -155,7 +155,7 @@ export function KYCVerificationSheet({
     setStep(resumeStep)
     setMaxReachedStep(resumeStep)
 
-    const steps = kycData?.steps as
+    const steps = kycSubmission.stepData as
       | Record<string, Record<string, unknown>>
       | undefined
     if (steps) {
@@ -176,7 +176,11 @@ export function KYCVerificationSheet({
             } else {
               const fieldKey = key as keyof typeof DEFAULT_VALUES
               if (fieldKey in DEFAULT_VALUES) {
-                form.setFieldValue(fieldKey, String(value))
+                let strValue = String(value)
+                if (key === 'dateOfBirth' && strValue.includes('T')) {
+                  strValue = strValue.split('T')[0]
+                }
+                form.setFieldValue(fieldKey, strValue)
               }
             }
           }
@@ -307,7 +311,9 @@ export function KYCVerificationSheet({
     }
 
     if (step === 4) {
-      await submitKycStep({ stepNumber: 3, data: {} })
+      if (kycSubmission?.status !== 'SUBMITTED') {
+        await submitKycStep({ stepNumber: 3, data: {} })
+      }
       await submitKyc()
       toast.success({
         title: 'Submission successful!',
@@ -344,14 +350,16 @@ export function KYCVerificationSheet({
     }
 
     if (step === 2) {
-      await submitKycStep({
-        stepNumber: 1,
-        data: {
-          directorFullName: v.directorFullName,
-          directorBvn: v.directorBvn,
-          directorNetWorth: num(v.directorNetWorth),
-        },
-      })
+      if (kycSubmission?.status !== 'SUBMITTED') {
+        await submitKycStep({
+          stepNumber: 1,
+          data: {
+            directorFullName: v.directorFullName,
+            directorBvn: v.directorBvn,
+            directorNetWorth: num(v.directorNetWorth),
+          },
+        })
+      }
       await submitKyc()
       toast.success({
         title: 'Submission successful!',
@@ -398,6 +406,49 @@ export function KYCVerificationSheet({
     setMaxReachedStep(1)
     setUploadedDocs({})
   }
+
+  const kycStatus = kycSubmission?.status
+  const isUnderReview =
+    kycStatus === 'SUBMITTED' && !!kycSubmission?.reviewedByAdminId
+  const isApproved = kycStatus === 'APPROVED'
+  const isRejected = kycStatus === 'REJECTED'
+  const isSubmitted = kycStatus === 'SUBMITTED'
+
+  const kycLocked = !!kycStatus && kycStatus !== 'IN_PROGRESS'
+
+  const statusBanner = isUnderReview
+    ? {
+        icon: <AlertCircle size={16} className="shrink-0 text-amber-500" />,
+        bg: 'bg-amber-50 border-amber-200',
+        text: 'text-amber-800',
+        message:
+          'Your KYC is currently being reviewed by our team. Changes are not allowed at this time.',
+      }
+    : isApproved
+      ? {
+          icon: <CheckCircle2 size={16} className="shrink-0 text-green-500" />,
+          bg: 'bg-green-50 border-green-200',
+          text: 'text-green-800',
+          message: 'Your KYC has been approved! No further action is needed.',
+        }
+      : isRejected
+        ? {
+            icon: <XCircle size={16} className="shrink-0 text-red-500" />,
+            bg: 'bg-red-50 border-red-200',
+            text: 'text-red-800',
+            message: kycSubmission?.reviewNote
+              ? `Your KYC was rejected: ${kycSubmission.reviewNote}. Please contact support if you need assistance.`
+              : 'Your KYC was rejected. Please contact support for more information.',
+          }
+        : isSubmitted
+          ? {
+              icon: <Info size={16} className="shrink-0 text-blue-500" />,
+              bg: 'bg-blue-50 border-blue-200',
+              text: 'text-blue-800',
+              message:
+                'Your KYC has been submitted and is awaiting review. No further changes can be made.',
+            }
+          : null
 
   return (
     <AppSheet open={open} onClose={handleClose} width={520}>
@@ -475,6 +526,14 @@ export function KYCVerificationSheet({
       </div>
 
       <div className="flex-1 overflow-y-auto bg-white px-5 py-5">
+        {statusBanner && (
+          <div
+            className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 mb-4 text-sm ${statusBanner.bg}`}
+          >
+            {statusBanner.icon}
+            <p className={statusBanner.text}>{statusBanner.message}</p>
+          </div>
+        )}
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={`${assessmentType}-${step}`}
@@ -543,6 +602,7 @@ export function KYCVerificationSheet({
         <Button
           type="button"
           onClick={handleNext}
+          disabled={kycLocked}
           className="rounded-full px-5"
         >
           {isLastStep ? 'Submit assessment' : 'Save and continue'}

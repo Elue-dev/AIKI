@@ -5,7 +5,7 @@ import AuthTitle from '@/components/auth/auth-title'
 import AuthWrapper from '@/components/auth/auth-wrapper'
 import OtpInput from '@/components/auth/otp-input'
 import { Button } from '@/components/ui/button'
-import { useVerifyEmail, useAuthStore } from '@/stores/auth'
+import { useVerifyEmail, useResendVerification, useAuthStore } from '@/stores/auth'
 import { toast } from '@/lib/toast'
 import { safeAsync } from '@/helpers/safe-sync'
 import { formatApiError } from '@/helpers/api-error'
@@ -20,16 +20,18 @@ const RESEND_COOLDOWN = 60
 function VerifyEmailPage() {
   const navigate = useNavigate()
   const pendingEmail = useAuthStore((s) => s.pendingEmail)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [otp, setOtp] = useState('')
   const [otpError, setOtpError] = useState(false)
   const [cooldown, setCooldown] = useState(0)
   const { mutateAsync: verifyEmail, isPending } = useVerifyEmail()
+  const { mutateAsync: resendVerification, isPending: isResending } = useResendVerification()
 
   useEffect(() => {
     if (!pendingEmail) {
-      navigate({ to: '/auth/login' })
+      navigate({ to: isAuthenticated ? '/' : '/auth/login' })
     }
-  }, [pendingEmail, navigate])
+  }, [pendingEmail, isAuthenticated, navigate])
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -63,16 +65,15 @@ function VerifyEmailPage() {
   }
 
   const handleResend = async () => {
-    const [_, error] = await safeAsync(() =>
-      fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: pendingEmail }),
-      }),
-    )
+    if (!pendingEmail) return
+
+    const [_, error] = await safeAsync(() => resendVerification(pendingEmail))
 
     if (error) {
-      toast.error({ title: 'Failed to resend code' })
+      toast.error({
+        title: 'Failed to resend code',
+        description: formatApiError(error as ApiError),
+      })
       return
     }
 
@@ -132,9 +133,10 @@ function VerifyEmailPage() {
             <button
               type="button"
               onClick={handleResend}
-              className="text-primary font-medium hover:underline"
+              disabled={isResending}
+              className="text-primary font-medium hover:underline disabled:opacity-50"
             >
-              Resend code
+              {isResending ? 'Sending…' : 'Resend code'}
             </button>
           )}
         </p>

@@ -148,6 +148,7 @@ function RegisterPage() {
           placeholder="+234 800 000 0000"
           validator={validators.phone}
           leftIcon={<Phone size={16} />}
+          required
         />
 
         <FormInput
