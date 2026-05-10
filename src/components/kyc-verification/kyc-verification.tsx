@@ -1,11 +1,20 @@
 import { formatApiError } from '@/helpers/api-error'
 import type { ApiError } from '@/lib/interceptor'
 import { toast } from '@/lib/toast'
-import { useStartKyc, useSubmitKyc, useSubmitKycStep, useUploadKycDocument } from '@/stores/kyc'
+import {
+  useStartKyc,
+  useSubmitKyc,
+  useSubmitKycStep,
+  useRegisterKycDocument,
+  useDeleteKycDocument,
+  useKycStatus,
+} from '@/stores/kyc'
+import type { KycDocumentType } from '@/stores/kyc/types'
+import { useLoaderStore } from '@/stores/loader'
 import { useForm } from '@tanstack/react-form'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CircleX } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/button'
 import { AppSheet } from '../ui/app-sheet'
 import { TypeToggle, type AssessmentType } from './common/type-toggle'
@@ -21,6 +30,64 @@ const TOTAL_STEPS: Record<AssessmentType, number> = {
   Business: 2,
 }
 
+const REQUIRED_FIELDS: Record<string, string[]> = {
+  'Personal-1': ['bvn', 'dateOfBirth', 'residentialAddress'],
+  'Personal-2': [
+    'employerName',
+    'employerAddress',
+    'monthsInRole',
+    'grossMonthlySalary',
+    'netMonthlySalary',
+  ],
+  'Personal-3': [
+    'monthlyRent',
+    'existingLoanAmount',
+    'bankName',
+    'bankAccountNumber',
+  ],
+  'Business-1': [
+    'numberOfEmployees',
+    'primaryRevenueSource',
+    'keyClientContracts',
+    'intendedUseOfFinance',
+  ],
+  'Business-2': ['directorFullName', 'directorBvn', 'directorNetWorth'],
+}
+
+const DEFAULT_VALUES = {
+  bvn: '',
+  dateOfBirth: '',
+  residentialAddress: '',
+  alternatePhone: '',
+  alternateEmail: '',
+  employerName: '',
+  employerAddress: '',
+  monthsInRole: '',
+  grossMonthlySalary: '',
+  netMonthlySalary: '',
+  hrContactName: '',
+  hrContactPhone: '',
+  hrContactEmail: '',
+  monthlyRent: '',
+  existingLoanAmount: '',
+  numberOfDependants: '',
+  otherMonthlyObligations: '',
+  bankName: '',
+  bankAccountNumber: '',
+  numberOfEmployees: '',
+  primaryRevenueSource: '',
+  keyClientContracts: '',
+  intendedUseOfFinance: '',
+  directorFullName: '',
+  directorBvn: '',
+  directorNetWorth: '',
+}
+
+export interface TradeRef {
+  name: string
+  phone: string
+}
+
 interface KYCVerificationSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -30,192 +97,285 @@ export function KYCVerificationSheet({
   open,
   onOpenChange,
 }: KYCVerificationSheetProps) {
-  const [assessmentType, setAssessmentType] = useState<AssessmentType>('Personal')
+  const [assessmentType, setAssessmentType] =
+    useState<AssessmentType>('Personal')
   const [step, setStep] = useState(1)
+  const [maxReachedStep, setMaxReachedStep] = useState(1)
   const [direction, setDirection] = useState(1)
-  const [isSubmittingStep, setIsSubmittingStep] = useState(false)
-  const [files, setFiles] = useState<Record<string, File | null>>({})
-  const [uploadingTypes, setUploadingTypes] = useState<string[]>([])
+  const [kycSubmissionId, setKycSubmissionId] = useState<string | null>(null)
+  const [uploadedDocs, setUploadedDocs] = useState<
+    Record<string, { name: string; id: string }>
+  >({})
+  const [tradeRefs, setTradeRefs] = useState<TradeRef[]>([
+    { name: '', phone: '' },
+  ])
 
   const { mutateAsync: startKyc } = useStartKyc()
   const { mutateAsync: submitKycStep } = useSubmitKycStep()
-  const { mutateAsync: uploadDocument } = useUploadKycDocument()
+  const { mutateAsync: registerDocument } = useRegisterKycDocument()
+  const { mutateAsync: deleteDocument } = useDeleteKycDocument()
   const { mutateAsync: submitKyc } = useSubmitKyc()
+  const { data: kycData, refetch: refetchKyc } = useKycStatus()
+  const kycSubmission = kycData?.submission
+  const setShowLoader = useLoaderStore((s) => s.setShowLoader)
 
   const totalSteps = TOTAL_STEPS[assessmentType]
   const isLastStep = step === totalSteps
 
   const form = useForm({
-    defaultValues: {
-      // Personal — Basic Details
-      fullName: '',
-      bvn: '',
-      dob: '',
-      address: '',
-      phone: '',
-      email: '',
-      alternateContact: '',
-      // Personal — Employment
-      employerName: '',
-      employerAddress: '',
-      employmentType: '',
-      monthsInRole: '',
-      grossSalary: '',
-      netSalary: '',
-      salaryChannel: '',
-      hrContact: '',
-      // Personal — Financial
-      monthlyRent: '',
-      existingLoans: '',
-      dependants: '',
-      otherObligations: '',
-      bankName: '',
-      accountNumber: '',
-      // Business — Operations
-      numEmployees: '',
-      revenueSource: '',
-      keyClientContracts: '',
-      intendedUse: '',
-      tradeReferences: '',
-      // Business — Director
-      directorFullName: '',
-      directorBVN: '',
-      directorIncome: '',
-    },
+    defaultValues: DEFAULT_VALUES,
     onSubmit: async () => {},
   })
 
+  const seededRef = useRef(false)
+
   useEffect(() => {
-    if (open) {
-      startKyc(assessmentType === 'Personal' ? 'PERSONAL' : 'BUSINESS').catch(() => {})
+    if (!open) {
+      seededRef.current = false
+      setTradeRefs([{ name: '', phone: '' }])
+      return
     }
+    refetchKyc()
   }, [open])
 
-  const handleFileChange = (type: string, file: File | null) => {
-    setFiles((prev) => ({ ...prev, [type]: file }))
+  useEffect(() => {
+    if (!open || seededRef.current || !kycSubmission) return
+    seededRef.current = true
+
+    setKycSubmissionId(kycSubmission.id)
+
+    const type: AssessmentType =
+      kycSubmission.type === 'PERSONAL' ? 'Personal' : 'Business'
+    setAssessmentType(type)
+
+    const resumeStep = Math.min(
+      kycSubmission.currentStep + 1,
+      TOTAL_STEPS[type],
+    )
+    setStep(resumeStep)
+    setMaxReachedStep(resumeStep)
+
+    const steps = kycData?.steps as
+      | Record<string, Record<string, unknown>>
+      | undefined
+    if (steps) {
+      for (const [, fields] of Object.entries(steps)) {
+        if (!fields) continue
+        for (const [key, value] of Object.entries(fields)) {
+          if (value !== null && value !== undefined) {
+            if (key === 'tradeReferences' && Array.isArray(value)) {
+              const refs = value as Array<{ name: string; phone: string }>
+              if (refs.length > 0) {
+                setTradeRefs(
+                  refs.map((r) => ({
+                    name: r.name ?? '',
+                    phone: r.phone ?? '',
+                  })),
+                )
+              }
+            } else {
+              const fieldKey = key as keyof typeof DEFAULT_VALUES
+              if (fieldKey in DEFAULT_VALUES) {
+                form.setFieldValue(fieldKey, String(value))
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [open, kycSubmission])
+
+  useEffect(() => {
+    if (!open || !kycSubmission?.documents?.length) return
+    const docsMap: Record<string, { name: string; id: string }> = {}
+    for (const doc of kycSubmission.documents) {
+      docsMap[doc.type] = { name: doc.fileName ?? doc.type, id: doc.id }
+    }
+    setUploadedDocs(docsMap)
+  }, [open, kycSubmission?.documents])
+
+  const num = (v: string) => (v === '' ? undefined : Number(v))
+  const advance = () => {
+    setDirection(1)
+    setStep((s) => {
+      const next = s + 1
+      setMaxReachedStep((m) => Math.max(m, next))
+      return next
+    })
   }
 
-  const uploadFiles = async (types: string[]) => {
-    for (const type of types) {
-      const file = files[type]
-      if (!file) continue
-      setUploadingTypes((prev) => [...prev, type])
+  const validateCurrentStep = async (): Promise<boolean> => {
+    const fields = REQUIRED_FIELDS[`${assessmentType}-${step}`] ?? []
+    if (!fields.length) return true
+    const results = await Promise.all(
+      fields.map((name) =>
+        form.validateField(name as keyof typeof DEFAULT_VALUES, 'submit'),
+      ),
+    )
+    return results.every((errs) => !errs || errs.length === 0)
+  }
+
+  const uploadDoc = async (type: string, file: File, docStep: number) => {
+    if (!kycSubmissionId) throw new Error('Submission not started yet')
+    const res = await registerDocument({
+      kycSubmissionId,
+      type: type as KycDocumentType,
+      step: docStep,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type || 'application/octet-stream',
+      storageKey: file.name,
+    })
+    setUploadedDocs((prev) => ({
+      ...prev,
+      [type]: { name: file.name, id: res.data.id },
+    }))
+  }
+
+  const removeDoc = async (type: string) => {
+    const doc = uploadedDocs[type]
+    if (doc?.id) {
       try {
-        await uploadDocument({ file, type })
-      } finally {
-        setUploadingTypes((prev) => prev.filter((t) => t !== type))
+        await deleteDocument(doc.id)
+      } catch {}
+    }
+    setUploadedDocs((prev) => {
+      const n = { ...prev }
+      delete n[type]
+      return n
+    })
+  }
+
+  const handlePersonalDocUpload = (type: string, file: File) =>
+    uploadDoc(type, file, 3)
+  const handleBusinessDocUpload = (type: string, file: File) =>
+    uploadDoc(type, file, 1)
+
+  const handlePersonalNext = async () => {
+    const v = form.state.values
+
+    if (step === 1) {
+      let id = kycSubmissionId
+      if (!id) {
+        const res = await startKyc('PERSONAL')
+        id = res.data.id
+        setKycSubmissionId(id)
       }
+      await submitKycStep({
+        stepNumber: 0,
+        data: {
+          bvn: v.bvn,
+          dateOfBirth: v.dateOfBirth,
+          residentialAddress: v.residentialAddress,
+          alternatePhone: v.alternatePhone || undefined,
+          alternateEmail: v.alternateEmail || undefined,
+        },
+      })
+      return advance()
+    }
+
+    if (step === 2) {
+      await submitKycStep({
+        stepNumber: 1,
+        data: {
+          employerName: v.employerName,
+          employerAddress: v.employerAddress,
+          monthsInRole: num(v.monthsInRole),
+          grossMonthlySalary: num(v.grossMonthlySalary),
+          netMonthlySalary: num(v.netMonthlySalary),
+          hrContactName: v.hrContactName || undefined,
+          hrContactPhone: v.hrContactPhone || undefined,
+          hrContactEmail: v.hrContactEmail || undefined,
+        },
+      })
+      return advance()
+    }
+
+    if (step === 3) {
+      await submitKycStep({
+        stepNumber: 2,
+        data: {
+          monthlyRent: num(v.monthlyRent),
+          existingLoanAmount: num(v.existingLoanAmount),
+          numberOfDependants: num(v.numberOfDependants),
+          otherMonthlyObligations: num(v.otherMonthlyObligations),
+          bankName: v.bankName,
+          bankAccountNumber: v.bankAccountNumber,
+        },
+      })
+      return advance()
+    }
+
+    if (step === 4) {
+      await submitKycStep({ stepNumber: 3, data: {} })
+      await submitKyc()
+      toast.success({
+        title: 'Submission successful!',
+        description: "Your KYC is under review. We'll notify you shortly.",
+      })
+      handleClose()
     }
   }
 
-  const advance = () => {
-    setDirection(1)
-    setStep((s) => s + 1)
+  const handleBusinessNext = async () => {
+    const v = form.state.values
+
+    if (step === 1) {
+      let id = kycSubmissionId
+      if (!id) {
+        const res = await startKyc('BUSINESS')
+        id = res.data.id
+        setKycSubmissionId(id)
+      }
+      const tradeReferences = tradeRefs
+        .filter((r) => r.name.trim())
+        .map((r) => ({ name: r.name, phone: r.phone }))
+      await submitKycStep({
+        stepNumber: 0,
+        data: {
+          numberOfEmployees: num(v.numberOfEmployees),
+          primaryRevenueSource: v.primaryRevenueSource,
+          keyClientContracts: v.keyClientContracts,
+          intendedUseOfFinance: v.intendedUseOfFinance,
+          tradeReferences,
+        },
+      })
+      return advance()
+    }
+
+    if (step === 2) {
+      await submitKycStep({
+        stepNumber: 1,
+        data: {
+          directorFullName: v.directorFullName,
+          directorBvn: v.directorBvn,
+          directorNetWorth: num(v.directorNetWorth),
+        },
+      })
+      await submitKyc()
+      toast.success({
+        title: 'Submission successful!',
+        description: "Your KYC is under review. We'll notify you shortly.",
+      })
+      handleClose()
+    }
   }
 
   const handleNext = async () => {
-    setIsSubmittingStep(true)
-    try {
-      const v = form.state.values
+    const isValid = await validateCurrentStep()
+    if (!isValid) return
 
-      if (assessmentType === 'Personal') {
-        if (step === 1) {
-          await submitKycStep({
-            stepNumber: 1,
-            data: {
-              fullName: v.fullName,
-              bvn: v.bvn,
-              dob: v.dob,
-              address: v.address,
-              phone: v.phone,
-              email: v.email,
-              alternateContact: v.alternateContact,
-            },
-          })
-          advance()
-        } else if (step === 2) {
-          await submitKycStep({
-            stepNumber: 2,
-            data: {
-              employerName: v.employerName,
-              employerAddress: v.employerAddress,
-              employmentType: v.employmentType,
-              monthsInRole: v.monthsInRole,
-              grossSalary: v.grossSalary,
-              netSalary: v.netSalary,
-              salaryChannel: v.salaryChannel,
-              hrContact: v.hrContact,
-            },
-          })
-          advance()
-        } else if (step === 3) {
-          await submitKycStep({
-            stepNumber: 3,
-            data: {
-              monthlyRent: v.monthlyRent,
-              existingLoans: v.existingLoans,
-              dependants: v.dependants,
-              otherObligations: v.otherObligations,
-              bankName: v.bankName,
-              accountNumber: v.accountNumber,
-            },
-          })
-          advance()
-        } else if (step === 4) {
-          await uploadFiles([
-            'payslip',
-            'bank_statement',
-            'government_id',
-            'proof_of_address',
-            'employment_letter',
-            'crc_consent',
-          ])
-          await submitKyc()
-          toast.success({
-            title: 'Submission successful!',
-            description: "Your KYC is under review. We'll notify you shortly.",
-          })
-          handleClose()
-        }
-      } else {
-        // Business
-        if (step === 1) {
-          await submitKycStep({
-            stepNumber: 1,
-            data: {
-              numEmployees: v.numEmployees,
-              revenueSource: v.revenueSource,
-              keyClientContracts: v.keyClientContracts,
-              intendedUse: v.intendedUse,
-              tradeReferences: v.tradeReferences,
-            },
-          })
-          advance()
-        } else if (step === 2) {
-          await submitKycStep({
-            stepNumber: 2,
-            data: {
-              directorFullName: v.directorFullName,
-              directorBVN: v.directorBVN,
-              directorIncome: v.directorIncome,
-            },
-          })
-          await uploadFiles(['director_id', 'board_resolution', 'director_bank_statement'])
-          await submitKyc()
-          toast.success({
-            title: 'Submission successful!',
-            description: "Your KYC is under review. We'll notify you shortly.",
-          })
-          handleClose()
-        }
-      }
+    setShowLoader(true)
+    try {
+      if (assessmentType === 'Personal') await handlePersonalNext()
+      else await handleBusinessNext()
     } catch (err) {
       toast.error({
         title: 'Submission failed',
         description: formatApiError(err as ApiError),
       })
     } finally {
-      setIsSubmittingStep(false)
+      setShowLoader(false)
     }
   }
 
@@ -227,15 +387,16 @@ export function KYCVerificationSheet({
   const handleTypeChange = (t: AssessmentType) => {
     setAssessmentType(t)
     setStep(1)
-    setFiles({})
-    startKyc(t === 'Personal' ? 'PERSONAL' : 'BUSINESS').catch(() => {})
+    setMaxReachedStep(1)
+    setUploadedDocs({})
   }
 
   const handleClose = () => {
     onOpenChange(false)
     setAssessmentType('Personal')
     setStep(1)
-    setFiles({})
+    setMaxReachedStep(1)
+    setUploadedDocs({})
   }
 
   return (
@@ -259,6 +420,58 @@ export function KYCVerificationSheet({
           securely.
         </p>
         <TypeToggle value={assessmentType} onChange={handleTypeChange} />
+
+        {/* Step indicator */}
+        <div className="flex items-center mt-4">
+          {Array.from({ length: totalSteps }, (_, i) => {
+            const s = i + 1
+            const isActive = s === step
+            const isCompleted = s < maxReachedStep
+
+            return (
+              <div key={s} className="flex items-center flex-1 last:flex-none">
+                <button
+                  type="button"
+                  disabled={isActive}
+                  onClick={() => {
+                    setDirection(s < step ? -1 : 1)
+                    setStep(s)
+                  }}
+                  className={[
+                    'w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all duration-200 border',
+                    isActive
+                      ? 'bg-primary text-white border-primary cursor-default'
+                      : isCompleted
+                        ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 cursor-pointer'
+                        : 'bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-200 cursor-pointer',
+                  ].join(' ')}
+                >
+                  {isCompleted ? (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M2 6l3 3 5-5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    s
+                  )}
+                </button>
+                {s < totalSteps && (
+                  <div
+                    className={[
+                      'flex-1 h-px mx-1.5 transition-colors duration-200',
+                      s < maxReachedStep ? 'bg-primary/30' : 'bg-gray-200',
+                    ].join(' ')}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto bg-white px-5 py-5">
@@ -290,21 +503,26 @@ export function KYCVerificationSheet({
                 {assessmentType === 'Personal' && step === 4 && (
                   <SupportingDocuments
                     totalSteps={totalSteps}
-                    files={files}
-                    onFileChange={handleFileChange}
-                    uploadingTypes={uploadingTypes}
+                    uploadedDocs={uploadedDocs}
+                    onUpload={handlePersonalDocUpload}
+                    onRemove={(type) => removeDoc(type)}
                   />
                 )}
                 {assessmentType === 'Business' && step === 1 && (
-                  <OperationsAndContracts form={form} totalSteps={totalSteps} />
+                  <OperationsAndContracts
+                    form={form}
+                    totalSteps={totalSteps}
+                    tradeRefs={tradeRefs}
+                    onTradeRefsChange={setTradeRefs}
+                  />
                 )}
                 {assessmentType === 'Business' && step === 2 && (
                   <GuarantorDirectorSignatory
                     form={form}
                     totalSteps={totalSteps}
-                    files={files}
-                    onFileChange={handleFileChange}
-                    uploadingTypes={uploadingTypes}
+                    uploadedDocs={uploadedDocs}
+                    onUpload={handleBusinessDocUpload}
+                    onRemove={(type) => removeDoc(type)}
                   />
                 )}
               </form>
@@ -318,23 +536,16 @@ export function KYCVerificationSheet({
           type="button"
           variant="outline"
           onClick={step === 1 ? handleClose : handleBack}
-          disabled={isSubmittingStep}
           className="px-4"
         >
           {step === 1 ? 'Cancel' : 'Back'}
         </Button>
-
         <Button
           type="button"
           onClick={handleNext}
-          disabled={isSubmittingStep}
           className="rounded-full px-5"
         >
-          {isSubmittingStep
-            ? 'Please wait…'
-            : isLastStep
-              ? 'Submit assessment'
-              : 'Save and continue'}
+          {isLastStep ? 'Submit assessment' : 'Save and continue'}
         </Button>
       </div>
     </AppSheet>

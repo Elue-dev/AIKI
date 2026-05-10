@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sileo'
 
 import Header from '#/components/header'
+import NotFound from '#/components/ui/not-found'
 import appCss from '../styles.css?url'
 import { useLoaderStore } from '#/stores/loader'
 import AppLoader from '#/components/ui/app-loader'
@@ -19,6 +20,7 @@ const queryClient = new QueryClient({
 })
 
 export const Route = createRootRoute({
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       {

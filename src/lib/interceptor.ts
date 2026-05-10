@@ -82,15 +82,20 @@ export async function responseErrorInterceptor(
 
     return new Promise(async (resolve, reject) => {
       try {
+        const storedRefreshToken = useAuthStore.getState().refreshToken
         const { data } = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-          {},
+          { refreshToken: storedRefreshToken },
           { withCredentials: true },
         )
 
-        const newToken: string = data?.data?.access_token
-        const newExpiry: string | undefined = data?.data?.access_token_expiry
-        useAuthStore.getState().setAccessToken(newToken, newExpiry)
+        const newToken: string = data?.data?.access_token ?? data?.data?.accessToken
+        const newRefreshToken: string | undefined =
+          data?.data?.refresh_token ?? data?.data?.refreshToken
+        useAuthStore.getState().setAccessToken(newToken)
+        if (newRefreshToken) {
+          useAuthStore.getState().setTokens(newToken, newRefreshToken)
+        }
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`
         processQueue(null, newToken)
         resolve(axios(originalRequest))

@@ -11,13 +11,16 @@ export interface User {
 
 export interface AuthState {
   accessToken: string | null
+  refreshToken: string | null
   user: User | null
   isAuthenticated: boolean
   pendingEmail: string | null
   pendingToken: string | null
+  pendingRefreshToken: string | null
+  setTokens: (accessToken: string, refreshToken: string) => void
   setAccessToken: (token: string) => void
   setUser: (user: User) => void
-  setPendingVerification: (email: string, token: string) => void
+  setPendingVerification: (email: string, token: string, refreshToken?: string) => void
   confirmVerified: () => void
   logout: () => void
 }
@@ -63,6 +66,7 @@ export interface VerifyEmailResponse {
   data: {
     user: User
     accessToken: string
+    refreshToken?: string
   }
 }
 

@@ -16,30 +16,39 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       accessToken: null,
+      refreshToken: null,
       user: null,
       isAuthenticated: false,
       pendingEmail: null,
       pendingToken: null,
+      pendingRefreshToken: null,
+      setTokens: (accessToken, refreshToken) => {
+        set({ accessToken, refreshToken, isAuthenticated: true })
+      },
       setAccessToken: (token) => {
         set({ accessToken: token, isAuthenticated: true })
       },
       setUser: (user) => set({ user }),
-      setPendingVerification: (email, token) =>
-        set({ pendingEmail: email, pendingToken: token }),
+      setPendingVerification: (email, token, refreshToken) =>
+        set({ pendingEmail: email, pendingToken: token, pendingRefreshToken: refreshToken ?? null }),
       confirmVerified: () =>
         set((s) => ({
           accessToken: s.pendingToken,
+          refreshToken: s.pendingRefreshToken,
           isAuthenticated: true,
           pendingEmail: null,
           pendingToken: null,
+          pendingRefreshToken: null,
         })),
       logout: () => {
         set({
           accessToken: null,
+          refreshToken: null,
           user: null,
           isAuthenticated: false,
           pendingEmail: null,
           pendingToken: null,
+          pendingRefreshToken: null,
         })
       },
     }),
@@ -49,8 +58,10 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: s.isAuthenticated,
         user: s.user,
         accessToken: s.accessToken,
+        refreshToken: s.refreshToken,
         pendingEmail: s.pendingEmail,
         pendingToken: s.pendingToken,
+        pendingRefreshToken: s.pendingRefreshToken,
       }),
     },
   ),
@@ -69,20 +80,16 @@ export const useMe = () =>
   })
 
 export function useLogin() {
-  const setPendingVerification = useAuthStore((s) => s.setPendingVerification)
-  const setAccessToken = useAuthStore((s) => s.setAccessToken)
+  const setTokens = useAuthStore((s) => s.setTokens)
   const setUser = useAuthStore((s) => s.setUser)
 
   return useMutation({
     mutationFn: (payload: LoginPayload) =>
       withSlowRequestTracking(() => authApi.login(payload)),
     onSuccess: (res) => {
-      // If the API eventually returns isVerified=false, handle it here.
-      // For now, login means verified — go straight to authenticated.
-      setAccessToken(res.data.accessToken)
+      setTokens(res.data.accessToken, res.data.refreshToken)
       setUser(res.data.user)
     },
-    // If login fails with "email not verified", the screen handles navigation.
     onError: () => {},
   })
 }
@@ -94,8 +101,7 @@ export function useRegister() {
     mutationFn: (payload: RegisterPayload) =>
       withSlowRequestTracking(() => authApi.register(payload)),
     onSuccess: (res) => {
-      // Don't authenticate yet — store pending state for OTP verify step
-      setPendingVerification(res.data.user.email, res.data.accessToken)
+      setPendingVerification(res.data.user.email, res.data.accessToken, res.data.refreshToken)
     },
   })
 }

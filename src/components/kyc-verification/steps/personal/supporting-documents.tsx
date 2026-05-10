@@ -3,21 +3,21 @@ import { SectionHeader } from '../../common/section-header'
 
 interface Props {
   totalSteps: number
-  files: Record<string, File | null>
-  onFileChange: (type: string, file: File | null) => void
-  uploadingTypes: string[]
+  uploadedDocs: Record<string, { name: string } | null>
+  onUpload: (type: string, file: File) => Promise<void>
+  onRemove: (type: string) => void
 }
 
 const PERSONAL_DOCS: { type: string; label: string; description?: string; required?: boolean }[] = [
-  { type: 'payslip', label: '3 months payslips', description: 'Most recent, stamped by employer' },
-  { type: 'bank_statement', label: '6 months bank statement', description: 'Official PDF from bank with salary inflows visible' },
-  { type: 'government_id', label: 'Valid government ID', description: 'NIN slip, international passport, or driver\'s licence' },
-  { type: 'proof_of_address', label: 'Proof of address', description: 'Utility bill or bank statement showing address (3 months+)' },
-  { type: 'employment_letter', label: 'Employment confirmation letter', required: false },
-  { type: 'crc_consent', label: 'CRC / CreditRegistry consent', description: 'Signed consent for bureau pull', required: false },
+  { type: 'PAYSLIP', label: '3 months payslips', description: 'Most recent, stamped by employer' },
+  { type: 'BANK_STATEMENT', label: '6 months bank statement', description: 'Official PDF from bank with salary inflows visible' },
+  { type: 'ID_CARD', label: 'Valid government ID', description: "NIN slip, international passport, or driver's licence" },
+  { type: 'UTILITY_BILL', label: 'Proof of address', description: 'Utility bill or bank statement showing address (3 months+)' },
+  { type: 'EMPLOYMENT_LETTER', label: 'Employment confirmation letter', required: false },
+  { type: 'CRC_CONSENT', label: 'CRC / CreditRegistry consent', description: 'Signed consent for bureau pull', required: false },
 ]
 
-export function SupportingDocuments({ totalSteps, files, onFileChange, uploadingTypes }: Props) {
+export function SupportingDocuments({ totalSteps, uploadedDocs, onUpload, onRemove }: Props) {
   return (
     <>
       <SectionHeader title="Supporting Documents" step={4} total={totalSteps} />
@@ -27,9 +27,9 @@ export function SupportingDocuments({ totalSteps, files, onFileChange, uploading
           label={label}
           description={description}
           required={required}
-          value={files[type]}
-          onChange={(file) => onFileChange(type, file)}
-          uploading={uploadingTypes.includes(type)}
+          uploadedFile={uploadedDocs[type]}
+          onUpload={(file) => onUpload(type, file)}
+          onRemove={() => onRemove(type)}
         />
       ))}
     </>

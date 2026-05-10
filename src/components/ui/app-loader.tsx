@@ -5,7 +5,7 @@ export default function AppLoader() {
 
   return (
     <div className="fixed inset-0 z-9999 flex flex-col justify-start bg-black/25">
-      <div className="w-full h-0.75 relative overflow-hidden">
+      <div className="w-full h-1.25 relative overflow-hidden">
         <div
           className="loader-bar absolute"
           style={{

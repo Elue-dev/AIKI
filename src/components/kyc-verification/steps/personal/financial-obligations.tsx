@@ -1,6 +1,7 @@
 import FormInput from '@/components/ui/form/form-input'
 import FormSelect from '@/components/ui/form/form-select'
 import { SectionHeader } from '../../common/section-header'
+import { validators } from '@/helpers/validators'
 
 interface Props {
   form: any
@@ -8,55 +9,51 @@ interface Props {
 }
 
 const BANKS = [
-  { label: 'Access Bank', value: 'access' },
-  { label: 'First Bank', value: 'first-bank' },
-  { label: 'GTBank', value: 'gtbank' },
-  { label: 'Zenith Bank', value: 'zenith' },
-  { label: 'UBA', value: 'uba' },
-  { label: 'Providus Bank', value: 'providus' },
-  { label: 'Wema Bank', value: 'wema' },
+  { label: 'Access Bank', value: 'Access Bank' },
+  { label: 'First Bank', value: 'First Bank' },
+  { label: 'GTBank', value: 'GTBank' },
+  { label: 'Zenith Bank', value: 'Zenith Bank' },
+  { label: 'UBA', value: 'UBA' },
+  { label: 'Providus Bank', value: 'Providus Bank' },
+  { label: 'Wema Bank', value: 'Wema Bank' },
 ]
 
 export function FinancialObligations({ form, totalSteps }: Props) {
   return (
     <>
-      <SectionHeader
-        title="Financial Obligations"
-        step={3}
-        total={totalSteps}
-      />
+      <SectionHeader title="Financial Obligations" step={3} total={totalSteps} />
       <FormInput
         form={form}
         name="monthlyRent"
         label="Monthly rent / mortgage"
-        placeholder="Enter amount"
+        placeholder="150000"
         type="number"
-        validator={{}}
+        validator={validators.required('Monthly rent')}
         required
       />
       <FormInput
         form={form}
-        name="existingLoans"
+        name="existingLoanAmount"
         label="Existing loan obligations"
-        placeholder="Enter amount"
+        placeholder="0"
         type="number"
-        validator={{}}
+        validator={validators.required('Existing loan amount')}
         required
       />
       <div className="grid grid-cols-2 gap-3">
         <FormInput
           form={form}
-          name="dependants"
-          label="Number of financial dependants"
-          placeholder="Enter number"
+          name="numberOfDependants"
+          label="Number of dependants"
+          placeholder="2"
           type="number"
           validator={{}}
         />
         <FormInput
           form={form}
-          name="otherObligations"
+          name="otherMonthlyObligations"
           label="Other monthly obligations"
-          placeholder="500,000.00"
+          placeholder="50000"
           type="number"
           validator={{}}
         />
@@ -65,18 +62,18 @@ export function FinancialObligations({ form, totalSteps }: Props) {
         <FormSelect
           form={form}
           name="bankName"
-          label="BVN-linked bank account"
+          label="BVN-linked bank"
           placeholder="Select bank"
-          validator={{}}
+          validator={validators.required('Bank name')}
           required
           options={BANKS}
         />
         <FormInput
           form={form}
-          name="accountNumber"
+          name="bankAccountNumber"
           label="Account number"
           placeholder="0123456789"
-          validator={{}}
+          validator={validators.required('Account number')}
           required
         />
       </div>
