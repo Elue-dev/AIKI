@@ -6,7 +6,7 @@ import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-export const Route = createFileRoute('/orders')({ component: OrderHistoryPage })
+export const Route = createFileRoute('/_authenticated/orders')({ component: OrderHistoryPage })
 
 type Order = {
   id: string

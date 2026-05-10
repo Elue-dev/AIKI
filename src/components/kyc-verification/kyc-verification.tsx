@@ -1,9 +1,12 @@
-import { Button } from '@/components/ui/button'
+import { formatApiError } from '@/helpers/api-error'
+import type { ApiError } from '@/lib/interceptor'
 import { toast } from '@/lib/toast'
+import { useStartKyc, useSubmitKyc, useSubmitKycStep, useUploadKycDocument } from '@/stores/kyc'
 import { useForm } from '@tanstack/react-form'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CircleX } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Button } from '../ui/button'
 import { AppSheet } from '../ui/app-sheet'
 import { TypeToggle, type AssessmentType } from './common/type-toggle'
 import { GuarantorDirectorSignatory } from './steps/business.tsx/gurantor-director-signatory'
@@ -27,16 +30,24 @@ export function KYCVerificationSheet({
   open,
   onOpenChange,
 }: KYCVerificationSheetProps) {
-  const [assessmentType, setAssessmentType] =
-    useState<AssessmentType>('Personal')
+  const [assessmentType, setAssessmentType] = useState<AssessmentType>('Personal')
   const [step, setStep] = useState(1)
   const [direction, setDirection] = useState(1)
+  const [isSubmittingStep, setIsSubmittingStep] = useState(false)
+  const [files, setFiles] = useState<Record<string, File | null>>({})
+  const [uploadingTypes, setUploadingTypes] = useState<string[]>([])
+
+  const { mutateAsync: startKyc } = useStartKyc()
+  const { mutateAsync: submitKycStep } = useSubmitKycStep()
+  const { mutateAsync: uploadDocument } = useUploadKycDocument()
+  const { mutateAsync: submitKyc } = useSubmitKyc()
 
   const totalSteps = TOTAL_STEPS[assessmentType]
   const isLastStep = step === totalSteps
 
   const form = useForm({
     defaultValues: {
+      // Personal — Basic Details
       fullName: '',
       bvn: '',
       dob: '',
@@ -44,6 +55,7 @@ export function KYCVerificationSheet({
       phone: '',
       email: '',
       alternateContact: '',
+      // Personal — Employment
       employerName: '',
       employerAddress: '',
       employmentType: '',
@@ -52,45 +64,158 @@ export function KYCVerificationSheet({
       netSalary: '',
       salaryChannel: '',
       hrContact: '',
+      // Personal — Financial
       monthlyRent: '',
       existingLoans: '',
       dependants: '',
       otherObligations: '',
       bankName: '',
       accountNumber: '',
-      bizName: '',
-      rcNumber: '',
-      bizType: '',
-      bizAddress: '',
-      bizPhone: '',
-      bizEmail: '',
-      annualRevenue: '',
-      guarantorName: '',
-      guarantorBVN: '',
-      guarantorPhone: '',
-      guarantorEmail: '',
+      // Business — Operations
+      numEmployees: '',
+      revenueSource: '',
+      keyClientContracts: '',
+      intendedUse: '',
+      tradeReferences: '',
+      // Business — Director
+      directorFullName: '',
+      directorBVN: '',
+      directorIncome: '',
     },
-    onSubmit: async ({ value }) => {
-      console.log('submitted', value)
-      toast.success({
-        title: 'Submission successful!',
-        description: 'Your account is under review',
-      })
-      onOpenChange(false)
-    },
+    onSubmit: async () => {},
   })
 
-  const handleTypeChange = (t: AssessmentType) => {
-    setAssessmentType(t)
-    setStep(1)
+  useEffect(() => {
+    if (open) {
+      startKyc(assessmentType === 'Personal' ? 'PERSONAL' : 'BUSINESS').catch(() => {})
+    }
+  }, [open])
+
+  const handleFileChange = (type: string, file: File | null) => {
+    setFiles((prev) => ({ ...prev, [type]: file }))
   }
 
-  const handleNext = () => {
-    if (isLastStep) {
-      form.handleSubmit()
-    } else {
-      setDirection(1)
-      setStep((s) => s + 1)
+  const uploadFiles = async (types: string[]) => {
+    for (const type of types) {
+      const file = files[type]
+      if (!file) continue
+      setUploadingTypes((prev) => [...prev, type])
+      try {
+        await uploadDocument({ file, type })
+      } finally {
+        setUploadingTypes((prev) => prev.filter((t) => t !== type))
+      }
+    }
+  }
+
+  const advance = () => {
+    setDirection(1)
+    setStep((s) => s + 1)
+  }
+
+  const handleNext = async () => {
+    setIsSubmittingStep(true)
+    try {
+      const v = form.state.values
+
+      if (assessmentType === 'Personal') {
+        if (step === 1) {
+          await submitKycStep({
+            stepNumber: 1,
+            data: {
+              fullName: v.fullName,
+              bvn: v.bvn,
+              dob: v.dob,
+              address: v.address,
+              phone: v.phone,
+              email: v.email,
+              alternateContact: v.alternateContact,
+            },
+          })
+          advance()
+        } else if (step === 2) {
+          await submitKycStep({
+            stepNumber: 2,
+            data: {
+              employerName: v.employerName,
+              employerAddress: v.employerAddress,
+              employmentType: v.employmentType,
+              monthsInRole: v.monthsInRole,
+              grossSalary: v.grossSalary,
+              netSalary: v.netSalary,
+              salaryChannel: v.salaryChannel,
+              hrContact: v.hrContact,
+            },
+          })
+          advance()
+        } else if (step === 3) {
+          await submitKycStep({
+            stepNumber: 3,
+            data: {
+              monthlyRent: v.monthlyRent,
+              existingLoans: v.existingLoans,
+              dependants: v.dependants,
+              otherObligations: v.otherObligations,
+              bankName: v.bankName,
+              accountNumber: v.accountNumber,
+            },
+          })
+          advance()
+        } else if (step === 4) {
+          await uploadFiles([
+            'payslip',
+            'bank_statement',
+            'government_id',
+            'proof_of_address',
+            'employment_letter',
+            'crc_consent',
+          ])
+          await submitKyc()
+          toast.success({
+            title: 'Submission successful!',
+            description: "Your KYC is under review. We'll notify you shortly.",
+          })
+          handleClose()
+        }
+      } else {
+        // Business
+        if (step === 1) {
+          await submitKycStep({
+            stepNumber: 1,
+            data: {
+              numEmployees: v.numEmployees,
+              revenueSource: v.revenueSource,
+              keyClientContracts: v.keyClientContracts,
+              intendedUse: v.intendedUse,
+              tradeReferences: v.tradeReferences,
+            },
+          })
+          advance()
+        } else if (step === 2) {
+          await submitKycStep({
+            stepNumber: 2,
+            data: {
+              directorFullName: v.directorFullName,
+              directorBVN: v.directorBVN,
+              directorIncome: v.directorIncome,
+            },
+          })
+          await uploadFiles(['director_id', 'board_resolution', 'director_bank_statement'])
+          await submitKyc()
+          toast.success({
+            title: 'Submission successful!',
+            description: "Your KYC is under review. We'll notify you shortly.",
+          })
+          handleClose()
+        }
+      }
+    } catch (err) {
+      toast.error({
+        title: 'Submission failed',
+        description: formatApiError(err as ApiError),
+      })
+    } finally {
+      setIsSubmittingStep(false)
     }
   }
 
@@ -99,23 +224,29 @@ export function KYCVerificationSheet({
     setStep((s) => Math.max(1, s - 1))
   }
 
+  const handleTypeChange = (t: AssessmentType) => {
+    setAssessmentType(t)
+    setStep(1)
+    setFiles({})
+    startKyc(t === 'Personal' ? 'PERSONAL' : 'BUSINESS').catch(() => {})
+  }
+
+  const handleClose = () => {
+    onOpenChange(false)
+    setAssessmentType('Personal')
+    setStep(1)
+    setFiles({})
+  }
+
   return (
-    <AppSheet
-      open={open}
-      onClose={() => {
-        onOpenChange(false)
-        setAssessmentType('Personal')
-        setStep(1)
-      }}
-      width={520}
-    >
+    <AppSheet open={open} onClose={handleClose} width={520}>
       <div className="bg-white px-6 pt-6 pb-5 shrink-0">
         <div className="flex items-start justify-between mb-1.5">
           <h2 className="text-lg font-semibold text-gray-900">
             Identity Verification
           </h2>
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5"
           >
             <CircleX className="text-black cursor-pointer" size={20} />
@@ -140,7 +271,7 @@ export function KYCVerificationSheet({
             exit={{ opacity: 0, x: direction * -24 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
           >
-            <div className="bg-background rounded-2xl  px-5 py-5">
+            <div className="bg-background rounded-2xl px-5 py-5">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
@@ -157,7 +288,12 @@ export function KYCVerificationSheet({
                   <FinancialObligations form={form} totalSteps={totalSteps} />
                 )}
                 {assessmentType === 'Personal' && step === 4 && (
-                  <SupportingDocuments totalSteps={totalSteps} />
+                  <SupportingDocuments
+                    totalSteps={totalSteps}
+                    files={files}
+                    onFileChange={handleFileChange}
+                    uploadingTypes={uploadingTypes}
+                  />
                 )}
                 {assessmentType === 'Business' && step === 1 && (
                   <OperationsAndContracts form={form} totalSteps={totalSteps} />
@@ -166,6 +302,9 @@ export function KYCVerificationSheet({
                   <GuarantorDirectorSignatory
                     form={form}
                     totalSteps={totalSteps}
+                    files={files}
+                    onFileChange={handleFileChange}
+                    uploadingTypes={uploadingTypes}
                   />
                 )}
               </form>
@@ -178,21 +317,25 @@ export function KYCVerificationSheet({
         <Button
           type="button"
           variant="outline"
-          onClick={step === 1 ? () => onOpenChange(false) : handleBack}
+          onClick={step === 1 ? handleClose : handleBack}
+          disabled={isSubmittingStep}
           className="px-4"
         >
           {step === 1 ? 'Cancel' : 'Back'}
         </Button>
 
-        <div className="flex items-center gap-4">
-          <Button
-            type="button"
-            onClick={handleNext}
-            className="rounded-full px-5"
-          >
-            {isLastStep ? 'Submit assessment' : 'Save and continue'}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          onClick={handleNext}
+          disabled={isSubmittingStep}
+          className="rounded-full px-5"
+        >
+          {isSubmittingStep
+            ? 'Please wait…'
+            : isLastStep
+              ? 'Submit assessment'
+              : 'Save and continue'}
+        </Button>
       </div>
     </AppSheet>
   )

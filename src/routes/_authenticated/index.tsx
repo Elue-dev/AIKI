@@ -2,10 +2,13 @@ import { ApprovedVendors } from '#/components/home/approved-vendors'
 import { PaymentsDueAlert } from '#/components/home/payment-due-alert'
 import { QuickActions } from '#/components/home/quick-actions'
 import { TransactionHistory } from '#/components/transaction-history'
+import { useAuthStore } from '#/stores/auth'
 import { createFileRoute } from '@tanstack/react-router'
 import { Search } from 'lucide-react'
 
-export const Route = createFileRoute('/')({ component: HomePage })
+export const Route = createFileRoute('/_authenticated/')({
+  component: HomePage,
+})
 
 const transactions = [
   {
@@ -35,14 +38,16 @@ const transactions = [
 ]
 
 function HomePage() {
+  const auth = useAuthStore()
+  console.log('auth', auth.user)
+
   return (
     <div className="min-h-screen">
       <main className="wrapper py-10">
         <h1 className="text-[24px] md:text-[28px] font-bold text-center text-gray-900 mb-5 tracking-tight">
-          Hey, Sani Francis
+          Hey, {auth.user?.firstName} {auth.user?.lastName}
         </h1>
 
-        {/* Search */}
         <div className="mx-0 md:mx-12 lg:mx-24 flex items-center gap-3 bg-white border border-gray-200 rounded-full px-5 py-3 mb-7 shadow-sm">
           <Search size={15} className="text-gray-400 shrink-0" />
           <input
@@ -52,9 +57,7 @@ function HomePage() {
           />
         </div>
 
-        {/* Main layout — stacks on mobile, side by side on lg+ */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left column */}
           <div className="w-full lg:w-[48%] flex flex-col gap-4">
             <QuickActions />
             <PaymentsDueAlert
@@ -71,7 +74,6 @@ function HomePage() {
             />
           </div>
 
-          {/* Right column */}
           <div className="w-full lg:w-[52%]">
             <ApprovedVendors />
           </div>

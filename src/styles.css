@@ -205,3 +205,15 @@ body {
     width: 95%;
   }
 }
+
+@keyframes loader-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.loader-bar {
+  width: 25%;
+  height: 100%;
+  animation: loader-slide 0.9s ease-in-out infinite;
+  border-radius: 9999px;
+}

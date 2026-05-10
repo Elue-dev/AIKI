@@ -1,17 +1,24 @@
-import { Button } from '#/components/ui/button'
-import FormInput from '#/components/ui/form/form-input'
+import { Button } from '@/components/ui/button'
+import FormInput from '@/components/ui/form/form-input'
 import Avatar from '@/assets/img/avatar.png'
+import { KYCVerificationSheet } from '@/components/kyc-verification/kyc-verification'
 import { useForm } from '@tanstack/react-form'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { LogOut, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
+import { useLogout } from '@/stores/auth'
+import { toast } from '@/lib/toast'
 
-export const Route = createFileRoute('/profile')({
+export const Route = createFileRoute('/_authenticated/profile')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const [editingPersonal, setEditingPersonal] = useState(false)
   const [editingEmployment, setEditingEmployment] = useState(false)
+  const [kycOpen, setKycOpen] = useState(false)
+  const navigate = useNavigate()
+  const { mutateAsync: logout, isPending: isLoggingOut } = useLogout()
 
   const personalForm = useForm({
     defaultValues: {
@@ -48,19 +55,45 @@ function RouteComponent() {
 
   return (
     <div className="min-h-screen bg-[#F4F4F4]">
+      <KYCVerificationSheet open={kycOpen} onOpenChange={setKycOpen} />
       <main className="wrapper-sm py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[23px] md:text-[32px] font-semibold text-dark mb-4">
             Profile
           </h1>
-          <Button
-            onClick={() => {
-              personalForm.handleSubmit()
-              employmentForm.handleSubmit()
-            }}
-          >
-            Save Changes
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setKycOpen(true)}
+              className="gap-1.5"
+            >
+              <ShieldCheck size={14} />
+              Verify Identity (KYC)
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                await logout()
+                toast.success({ title: 'Logged out successfully' })
+                navigate({ to: '/auth/login', replace: true })
+              }}
+              disabled={isLoggingOut}
+              className="gap-1.5"
+            >
+              <LogOut size={14} />
+              {isLoggingOut ? 'Logging out…' : 'Log Out'}
+            </Button>
+            <Button
+              onClick={() => {
+                personalForm.handleSubmit()
+                employmentForm.handleSubmit()
+              }}
+            >
+              Save Changes
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">

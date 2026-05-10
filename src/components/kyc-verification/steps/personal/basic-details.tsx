@@ -1,4 +1,4 @@
-import FormInput from '#/components/ui/form/form-input'
+import FormInput from '@/components/ui/form/form-input'
 import { SectionHeader } from '../../common/section-header'
 
 interface Props {

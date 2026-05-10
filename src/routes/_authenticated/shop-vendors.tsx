@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/shop-vendors')({
+export const Route = createFileRoute('/_authenticated/shop-vendors')({
   component: RouteComponent,
 })
 

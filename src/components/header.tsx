@@ -59,6 +59,10 @@ function NavLink({
 }
 
 export default function Header() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+
+  if (pathname.startsWith('/auth') || pathname.startsWith('/reset-password')) return null
+
   return (
     <header className="bg-background px-4 md:px-8 py-3">
       <div className="flex items-center justify-between">

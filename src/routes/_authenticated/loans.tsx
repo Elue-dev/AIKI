@@ -6,7 +6,7 @@ import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
 import { Eye } from 'lucide-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/loans')({ component: LoanRecordPage })
+export const Route = createFileRoute('/_authenticated/loans')({ component: LoanRecordPage })
 
 type Loan = {
   id: string
