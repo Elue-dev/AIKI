@@ -61,7 +61,8 @@ function NavLink({
 export default function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
-  if (pathname.startsWith('/auth') || pathname.startsWith('/reset-password')) return null
+  if (pathname.startsWith('/auth') || pathname.startsWith('/reset-password'))
+    return null
 
   return (
     <header className="bg-background px-4 md:px-8 py-3">
@@ -87,7 +88,7 @@ export default function Header() {
           </button>
           <Link to="/profile">
             <img
-              src={Avatar}
+              src="https://www.svgrepo.com/show/452030/avatar-default.svg"
               className="h-9 w-9 md:h-10 md:w-10 rounded-full"
             />
           </Link>

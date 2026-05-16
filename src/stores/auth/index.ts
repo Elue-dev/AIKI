@@ -92,7 +92,8 @@ export function useLogin() {
     mutationFn: (payload: LoginPayload) =>
       withSlowRequestTracking(() => authApi.login(payload)),
     onSuccess: (res) => {
-      const user = res.data.user
+      const user = res?.data?.user
+      if (!user) throw new Error('Unable to reach the server. Please check your connection and try again.')
       if (user.role !== 'PERSONAL_CLIENT') {
         throw new Error(
           user.role === 'VENDOR' || user.role === 'VENDOR_EMPLOYEE'
