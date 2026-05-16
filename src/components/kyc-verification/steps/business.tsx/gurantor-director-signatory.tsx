@@ -9,6 +9,7 @@ interface Props {
   uploadedDocs: Record<string, { name: string } | null>
   onUpload: (type: string, file: File) => Promise<void>
   onRemove: (type: string) => void
+  disabled?: boolean
 }
 
 const DIRECTOR_DOCS: { type: string; label: string; required?: boolean }[] = [
@@ -17,7 +18,7 @@ const DIRECTOR_DOCS: { type: string; label: string; required?: boolean }[] = [
   { type: 'DIRECTOR_BANK_STATEMENT', label: 'Director personal bank statement', required: false },
 ]
 
-export function GuarantorDirectorSignatory({ form, totalSteps, uploadedDocs, onUpload, onRemove }: Props) {
+export function GuarantorDirectorSignatory({ form, totalSteps, uploadedDocs, onUpload, onRemove, disabled }: Props) {
   return (
     <>
       <SectionHeader title="Guarantor / Director Signatory" step={2} total={totalSteps} />
@@ -54,6 +55,7 @@ export function GuarantorDirectorSignatory({ form, totalSteps, uploadedDocs, onU
           uploadedFile={uploadedDocs[type]}
           onUpload={(file) => onUpload(type, file)}
           onRemove={() => onRemove(type)}
+          disabled={disabled}
         />
       ))}
     </>

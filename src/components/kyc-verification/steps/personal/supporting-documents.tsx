@@ -6,6 +6,7 @@ interface Props {
   uploadedDocs: Record<string, { name: string } | null>
   onUpload: (type: string, file: File) => Promise<void>
   onRemove: (type: string) => void
+  disabled?: boolean
 }
 
 const PERSONAL_DOCS: { type: string; label: string; description?: string; required?: boolean }[] = [
@@ -17,7 +18,7 @@ const PERSONAL_DOCS: { type: string; label: string; description?: string; requir
   { type: 'CRC_CONSENT', label: 'CRC / CreditRegistry consent', description: 'Signed consent for bureau pull', required: false },
 ]
 
-export function SupportingDocuments({ totalSteps, uploadedDocs, onUpload, onRemove }: Props) {
+export function SupportingDocuments({ totalSteps, uploadedDocs, onUpload, onRemove, disabled }: Props) {
   return (
     <>
       <SectionHeader title="Supporting Documents" step={4} total={totalSteps} />
@@ -30,6 +31,7 @@ export function SupportingDocuments({ totalSteps, uploadedDocs, onUpload, onRemo
           uploadedFile={uploadedDocs[type]}
           onUpload={(file) => onUpload(type, file)}
           onRemove={() => onRemove(type)}
+          disabled={disabled}
         />
       ))}
     </>

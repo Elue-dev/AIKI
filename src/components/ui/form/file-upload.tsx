@@ -9,6 +9,7 @@ interface FileUploadProps {
   uploadedFile?: { name: string } | null
   onUpload: (file: File) => Promise<void>
   onRemove?: () => void
+  disabled?: boolean
 }
 
 export function FileUpload({
@@ -19,6 +20,7 @@ export function FileUpload({
   uploadedFile,
   onUpload,
   onRemove,
+  disabled = false,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [progress, setProgress] = useState(0)
@@ -97,13 +99,15 @@ export function FileUpload({
               {uploadedFile.name}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="ml-2 text-gray-400 hover:text-red-500 transition-colors shrink-0 cursor-pointer"
-          >
-            <X size={16} />
-          </button>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="ml-2 text-gray-400 hover:text-red-500 transition-colors shrink-0 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       )}
 
@@ -124,7 +128,7 @@ export function FileUpload({
       )}
 
       {!isUploading && !uploadedFile && !error && (
-        <label className="flex flex-col items-center justify-center gap-1.5 border-[0.5px] border-dashed border-black rounded-2xl p-3 cursor-pointer hover:bg-gray-50 transition-colors bg-white">
+        <label className={`flex flex-col items-center justify-center gap-1.5 border-[0.5px] border-dashed rounded-2xl p-3 transition-colors bg-white ${disabled ? 'border-gray-200 opacity-50 cursor-not-allowed' : 'border-black cursor-pointer hover:bg-gray-50'}`}>
           <Upload size={16} className="text-[#9d9d9d]" />
           <span className="text-[14px] text-[#686868] font-medium">
             Click to upload
@@ -138,6 +142,7 @@ export function FileUpload({
             className="hidden"
             accept={accept ?? '.pdf,.jpg,.jpeg,.png'}
             onChange={handleFileChange}
+            disabled={disabled}
           />
         </label>
       )}

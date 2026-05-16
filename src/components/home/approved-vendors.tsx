@@ -38,24 +38,26 @@ export function ApprovedVendors() {
         <Separator />
       </div>
 
-      <div className="flex items-center gap-2 px-5 mb-2 mt-3 overflow-x-auto scrollbar-hide">
-        {categories.map(({ category }) => (
-          <button
-            key={category}
-            onClick={() =>
-              setActiveCategory(category === 'All' ? undefined : category)
-            }
-            className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
-              (category === 'All' && !activeCategory) ||
-              category === activeCategory
-                ? 'bg-primary/10 text-primary'
-                : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+      {!isLoading && devicesData && devicesData.data.length > 0 && (
+        <div className="flex items-center gap-2 px-5 mb-2 mt-3 overflow-x-auto scrollbar-hide">
+          {categories.map(({ category }) => (
+            <button
+              key={category}
+              onClick={() =>
+                setActiveCategory(category === 'All' ? undefined : category)
+              }
+              className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap capitalize ${
+                (category === 'All' && !activeCategory) ||
+                category === activeCategory
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-gray-500 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {category.toLowerCase()}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="relative mt-2 mb-4">
         {isLoading ? (

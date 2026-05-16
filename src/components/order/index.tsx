@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { CatalogDevice } from '@/stores/catalog/types'
-import type { ClientOrder } from '@/stores/orders/types'
+import type { CreatedOrder } from '@/stores/orders/types'
 import { AppSheet } from '@/components/ui/app-sheet'
 import { SummaryScreen } from './summary'
 import { ConfirmedScreen } from './confirmation'
@@ -22,7 +22,7 @@ export function OrderSummarySheet({
   const [screen, setScreen] = useState<Screen>('summary')
   const [tenure, setTenure] = useState('')
   const [agreed, setAgreed] = useState(false)
-  const [createdOrder, setCreatedOrder] = useState<ClientOrder | null>(null)
+  const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null)
 
   const handleClose = () => {
     onOpenChange(false)
@@ -34,7 +34,7 @@ export function OrderSummarySheet({
     }, 300)
   }
 
-  const handleConfirm = (order: ClientOrder) => {
+  const handleConfirm = (order: CreatedOrder) => {
     setCreatedOrder(order)
     setScreen('confirmed')
   }

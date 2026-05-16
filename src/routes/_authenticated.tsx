@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore, useMe } from '@/stores/auth'
 import { useEffect } from 'react'
 
 export const Route = createFileRoute('/_authenticated')({
@@ -8,7 +8,14 @@ export const Route = createFileRoute('/_authenticated')({
 
 function AuthenticatedLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const setUser = useAuthStore((s) => s.setUser)
   const navigate = useNavigate()
+  const { data: me } = useMe()
+
+  // Keep the store user in sync with fresh /me data
+  useEffect(() => {
+    if (me?.user) setUser(me.user)
+  }, [me, setUser])
 
   useEffect(() => {
     if (!isAuthenticated) {

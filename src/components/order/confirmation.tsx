@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
-import type { ClientOrder } from '@/stores/orders/types'
+import type { CreatedOrder } from '@/stores/orders/types'
 import { Button } from '@/components/ui/button'
 import { Separator } from '../ui/separator'
 import { Link } from '@tanstack/react-router'
@@ -27,7 +27,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 interface ConfirmedScreenProps {
-  order: ClientOrder
+  order: CreatedOrder
   onViewOrders: () => void
   onDone: () => void
 }
@@ -37,8 +37,10 @@ export function ConfirmedScreen({
   onViewOrders,
   onDone,
 }: ConfirmedScreenProps) {
+  const firstItem = order.items?.[0]
+  const deviceName = firstItem?.deviceName ?? 'your device'
   const monthlyPayment = order.monthlyPaymentKobo / 100
-  const total = order.totalPaymentKobo / 100
+  const total = order.totalRepayableKobo / 100
 
   return (
     <div className="flex flex-col h-full">
@@ -53,8 +55,7 @@ export function ConfirmedScreen({
             Your order is being processed
           </h3>
           <p className="text-[14px] text-black font-semibold">
-            We'll notify you once your {order.device.name} is ready for
-            delivery.
+            We'll notify you once your {deviceName} is ready for delivery.
           </p>
         </div>
 
@@ -64,7 +65,7 @@ export function ConfirmedScreen({
           </p>
           <div className="space-y-3 bg-white rounded-2xl px-5 py-3">
             {[
-              { label: 'Item', value: order.device.name },
+              { label: 'Item', value: deviceName },
               {
                 label: 'Payment plan',
                 value: `₦${monthlyPayment.toLocaleString(undefined, { maximumFractionDigits: 2 })}/month`,
@@ -92,9 +93,9 @@ export function ConfirmedScreen({
               <span className="text-[14px] text-black">Order reference</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-[16px] font-medium text-[#151D0C]">
-                  {order.orderNumber}
+                  {order.reference}
                 </span>
-                <CopyButton text={order.orderNumber} />
+                <CopyButton text={order.reference} />
               </div>
             </div>
 

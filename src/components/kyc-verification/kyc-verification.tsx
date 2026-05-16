@@ -112,7 +112,9 @@ export function KYCVerificationSheet({
 
   const { mutateAsync: startKyc } = useStartKyc()
   const { mutateAsync: submitKycStep } = useSubmitKycStep()
-  const { mutateAsync: registerDocument } = useRegisterKycDocument()
+  const { mutateAsync: registerDocument } = useRegisterKycDocument({
+    silent: true,
+  })
   const { mutateAsync: deleteDocument } = useDeleteKycDocument()
   const { mutateAsync: submitKyc } = useSubmitKyc()
   const { data: kycData, refetch: refetchKyc } = useKycStatus({ silent: true })
@@ -407,7 +409,7 @@ export function KYCVerificationSheet({
   const kycStatus = kycSubmission?.status
   const isUnderReview =
     kycStatus === 'SUBMITTED' && !!kycSubmission?.reviewedByAdminId
-  const isApproved = kycStatus === 'APPROVED'
+  const isApproved = kycStatus === 'APPROVED' || kycStatus === 'VERIFIED'
   const isRejected = kycStatus === 'REJECTED'
   const isSubmitted = kycStatus === 'SUBMITTED'
 
@@ -467,7 +469,11 @@ export function KYCVerificationSheet({
           ID, and a selfie. Your information is encrypted and processed
           securely.
         </p>
-        <TypeToggle value={assessmentType} onChange={handleTypeChange} disabled={!!kycSubmission} />
+        <TypeToggle
+          value={assessmentType}
+          onChange={handleTypeChange}
+          disabled={!!kycSubmission}
+        />
 
         {/* Step indicator */}
         <div className="flex items-center mt-4">
@@ -562,6 +568,7 @@ export function KYCVerificationSheet({
                     uploadedDocs={uploadedDocs}
                     onUpload={handlePersonalDocUpload}
                     onRemove={(type) => removeDoc(type)}
+                    disabled={kycLocked}
                   />
                 )}
                 {assessmentType === 'Business' && step === 1 && (
@@ -579,6 +586,7 @@ export function KYCVerificationSheet({
                     uploadedDocs={uploadedDocs}
                     onUpload={handleBusinessDocUpload}
                     onRemove={(type) => removeDoc(type)}
+                    disabled={kycLocked}
                   />
                 )}
               </form>
@@ -602,7 +610,11 @@ export function KYCVerificationSheet({
           disabled={kycLocked}
           className="rounded-full px-5"
         >
-          {isLastStep ? 'Submit assessment' : 'Save and continue'}
+          {isApproved
+            ? 'Already Approved'
+            : isLastStep
+              ? 'Submit KYC'
+              : 'Save and continue'}
         </Button>
       </div>
     </AppSheet>

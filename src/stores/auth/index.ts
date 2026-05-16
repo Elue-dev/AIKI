@@ -74,13 +74,15 @@ export const AUTH_KEYS = {
   me: ['auth', 'me'] as const,
 }
 
-export const useMe = () =>
-  useQuery({
+export const useMe = () => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  return useQuery({
     queryKey: AUTH_KEYS.me,
     queryFn: authApi.getMe,
     select: (res) => res.data,
-    enabled: useAuthStore.getState().isAuthenticated,
+    enabled: isAuthenticated,
   })
+}
 
 export function useLogin() {
   const setTokens = useAuthStore((s) => s.setTokens)
@@ -90,8 +92,16 @@ export function useLogin() {
     mutationFn: (payload: LoginPayload) =>
       withSlowRequestTracking(() => authApi.login(payload)),
     onSuccess: (res) => {
+      const user = res.data.user
+      if (user.role !== 'PERSONAL_CLIENT') {
+        throw new Error(
+          user.role === 'VENDOR' || user.role === 'VENDOR_EMPLOYEE'
+            ? 'This account is a merchant account. Please use the merchant dashboard to sign in.'
+            : 'Your account is not authorized to access this app.',
+        )
+      }
       setTokens(res.data.accessToken, res.data.refreshToken)
-      setUser(res.data.user)
+      setUser(user)
     },
     onError: () => {},
   })
@@ -116,6 +126,7 @@ export function useRegister() {
 export function useVerifyEmail() {
   const confirmVerified = useAuthStore((s) => s.confirmVerified)
   const setUser = useAuthStore((s) => s.setUser)
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (payload: VerifyEmailPayload) =>
@@ -123,6 +134,7 @@ export function useVerifyEmail() {
     onSuccess: (res) => {
       confirmVerified()
       if (res?.data?.user) setUser(res.data.user)
+      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me })
     },
   })
 }

@@ -7,11 +7,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { CatalogDevice } from '@/stores/catalog/types'
-import type { ClientOrder, OrderCalculation } from '@/stores/orders/types'
+import type { CreatedOrder, OrderCalculation } from '@/stores/orders/types'
 import { useCalculateOrder, useCreateOrder } from '@/stores/orders'
+import { useMe } from '@/stores/auth'
 import { toast } from '@/lib/toast'
 import { Check, CircleX, Copy, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
+const fmtNGN = (kobo: number) =>
+  new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 0,
+  }).format(kobo / 100)
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -42,7 +50,7 @@ interface SummaryScreenProps {
   onTenureChange: (v: string) => void
   agreed: boolean
   onAgreeChange: (v: boolean) => void
-  onConfirm: (order: ClientOrder) => void
+  onConfirm: (order: CreatedOrder) => void
   onCancel: () => void
 }
 
@@ -62,6 +70,8 @@ export function SummaryScreen({
     silent: true,
   })
   const { mutateAsync: createOrder, isPending: isCreating } = useCreateOrder()
+  const { data: meData } = useMe()
+  const creditLimit = meData?.personalProfile?.creditLimit
 
   useEffect(() => {
     if (!tenure) return
@@ -288,8 +298,10 @@ export function SummaryScreen({
 
       <div className="bg-white px-6 py-4 border-t border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between shrink-0">
         <div className="bg-white rounded-2xl px-5 py-4">
-          <p className="text-[14px] font-semibold text-black">Credit limit</p>
-          <p className="text-[24px] font-semibold text-black">₦5,000,000.00</p>
+          <p className="text-[14px] font-semibold text-black">Available credit</p>
+          <p className="text-[24px] font-semibold text-black">
+            {creditLimit ? fmtNGN(creditLimit.availableLimitKobo) : '—'}
+          </p>
         </div>
 
         <div className="flex gap-2">

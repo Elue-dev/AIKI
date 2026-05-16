@@ -3,6 +3,7 @@ import type {
   CalculateOrderPayload,
   OrderCalculation,
   CreateOrderPayload,
+  CreatedOrder,
   ClientOrder,
   PaginatedEnvelope,
 } from './types'
@@ -15,9 +16,7 @@ function unwrap<T>(res: any): T {
       'Request failed'
     throw new Error(msg)
   }
-  // envelope shape: { success: true, data: {...} }
   if (res?.success === true && 'data' in res) return res.data as T
-  // no envelope — response IS the data
   return res as T
 }
 
@@ -30,9 +29,11 @@ export const calculateOrder = async (
 
 export const createOrder = async (
   payload: CreateOrderPayload,
-): Promise<ClientOrder> => {
+): Promise<CreatedOrder> => {
   const res = await client.post('/client/orders', payload)
-  return unwrap<ClientOrder>(res)
+  // API returns { success: true, data: { order: {...} } }
+  const data = unwrap<{ order: CreatedOrder }>(res)
+  return data.order ?? (data as unknown as CreatedOrder)
 }
 
 export const getClientOrders = async (): Promise<PaginatedEnvelope<ClientOrder>> => {

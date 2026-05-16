@@ -27,24 +27,64 @@ export interface CreateOrderPayload {
   deliveryAddress: string
 }
 
+export interface CreatedOrderItem {
+  id: string
+  orderId: string
+  deviceId: string
+  quantity: number
+  unitPriceKobo: number
+  totalPriceKobo: number
+  deviceName: string
+  deviceModel: string
+  createdAt: string
+}
+
+/** Shape returned by POST /client/orders */
+export interface CreatedOrder {
+  id: string
+  reference: string
+  userId: string
+  vendorId: string
+  subtotalKobo: number
+  equityContributionKobo: number
+  interestRate: number
+  totalRepayableKobo: number
+  tenure: number
+  monthlyPaymentKobo: number
+  status: string
+  deliveryAddress: string
+  createdAt: string
+  items: CreatedOrderItem[]
+}
+
+/** Shape returned by GET /client/orders and GET /client/orders/:id */
 export interface ClientOrder {
   id: string
-  orderNumber: string
+  reference: string
   userId: string
+  vendorId: string
   status: string
   tenure: number
-  quantity: number
-  devicePriceKobo: number
+  subtotalKobo: number
+  equityContributionKobo: number
+  interestRate: number
+  totalRepayableKobo: number
   monthlyPaymentKobo: number
-  totalPaymentKobo: number
   deliveryAddress: string
-  device: {
+  createdAt: string
+  items: CreatedOrderItem[]
+  vendor?: {
     id: string
     name: string
-    model: string
-    vendor: { name: string }
+    slug?: string
+    logoUrl?: string | null
   }
-  createdAt: string
+  user?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
 }
 
 export interface PaginatedEnvelope<T> {

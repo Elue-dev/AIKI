@@ -9,6 +9,7 @@ import {
   type OnChangeFn,
 } from '@tanstack/react-table'
 import { useState } from 'react'
+import type React from 'react'
 import { Button } from './button'
 import { Download, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -32,6 +33,7 @@ interface DataTableProps<TData, TTab extends string = string> {
   tabs?: Tab<TTab>[]
   activeTab?: TTab
   onTabChange?: (tab: TTab) => void
+  filterSlot?: React.ReactNode
 
   showSearch?: boolean
   searchPlaceholder?: string
@@ -53,6 +55,7 @@ export function DataTable<TData, TTab extends string = string>({
   tabs,
   activeTab,
   onTabChange,
+  filterSlot,
   showSearch = true,
   searchPlaceholder = 'Search...',
   rowSelection = {},
@@ -98,9 +101,10 @@ export function DataTable<TData, TTab extends string = string>({
         </div>
       )}
 
-      {(tabs || showSearch) && (
+      {(tabs || filterSlot || showSearch) && (
         <div className="flex flex-col md:flex-row items-center justify-between px-6 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
+            {filterSlot}
             {tabs &&
               onTabChange &&
               tabs.map((tab) => {

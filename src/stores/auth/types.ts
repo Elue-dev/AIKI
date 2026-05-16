@@ -77,8 +77,42 @@ export interface RefreshResponse {
   }
 }
 
+export interface CreditLimit {
+  id: string
+  totalLimitKobo: number
+  usedLimitKobo: number
+  availableLimitKobo: number
+  assignedAt: string
+}
+
+export interface PersonalProfile {
+  id: string
+  bvn?: string | null
+  dateOfBirth?: string | null
+  residentialAddress?: string | null
+  employerName?: string | null
+  employerAddress?: string | null
+  monthsInRole?: number | null
+  grossMonthlySalary?: number | null
+  netMonthlySalary?: number | null
+  hrContactName?: string | null
+  hrContactPhone?: string | null
+  bankName?: string | null
+  bankAccountNumber?: string | null
+  creditLimit: CreditLimit | null
+}
+
+export interface MeData {
+  user: User
+  personalProfile: PersonalProfile | null
+  businessClient: Record<string, unknown> | null
+  businessEmployee: Record<string, unknown> | null
+  vendor: Record<string, unknown> | null
+  kycStatus: string
+}
+
 export interface MeResponse {
-  data: User
+  data: MeData
 }
 
 export interface ForgotPasswordPayload {

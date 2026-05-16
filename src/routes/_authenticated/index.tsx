@@ -46,7 +46,7 @@ function HomePage() {
     <div className="min-h-screen">
       <main className="wrapper py-10">
         <h1 className="text-[24px] md:text-[28px] font-bold text-center text-gray-900 mb-5 tracking-tight">
-          Hey, {auth.user?.firstName} {auth.user?.lastName}
+          Hey, {auth.user?.firstName || ''} {auth.user?.lastName || ''}
         </h1>
 
         <EmailVerificationBanner />
