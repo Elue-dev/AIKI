@@ -9,17 +9,25 @@ import {
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+  },
   withCredentials: true,
 })
 
 apiClient.interceptors.request.use(requestInterceptor, requestErrorInterceptor)
-apiClient.interceptors.response.use(responseSuccessInterceptor, responseErrorInterceptor)
+apiClient.interceptors.response.use(
+  responseSuccessInterceptor,
+  responseErrorInterceptor,
+)
 
 type RequestData = Record<string, unknown> | object
 
-const get = <T = unknown>(url: string, params?: AxiosRequestConfig['params']): Promise<T> =>
-  apiClient.get(url, params ? { params } : {})
+const get = <T = unknown>(
+  url: string,
+  params?: AxiosRequestConfig['params'],
+): Promise<T> => apiClient.get(url, params ? { params } : {})
 
 const post = <T = unknown>(url: string, data?: RequestData): Promise<T> =>
   apiClient.post(url, data)
