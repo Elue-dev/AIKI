@@ -5,6 +5,7 @@ import * as authApi from './api'
 import type {
   LoginPayload,
   RegisterPayload,
+  RegisterVendorPayload,
   VerifyEmailPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
@@ -116,6 +117,22 @@ export function useRegister() {
   return useMutation({
     mutationFn: (payload: RegisterPayload) =>
       withSlowRequestTracking(() => authApi.register(payload)),
+    onSuccess: (res) => {
+      setTokens(res.data.accessToken, res.data.refreshToken)
+      setUser(res.data.user)
+      setPendingEmail(res.data.user.email)
+    },
+  })
+}
+
+export function useRegisterVendor() {
+  const setTokens = useAuthStore((s) => s.setTokens)
+  const setUser = useAuthStore((s) => s.setUser)
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail)
+
+  return useMutation({
+    mutationFn: (payload: RegisterVendorPayload) =>
+      withSlowRequestTracking(() => authApi.registerVendor(payload)),
     onSuccess: (res) => {
       setTokens(res.data.accessToken, res.data.refreshToken)
       setUser(res.data.user)

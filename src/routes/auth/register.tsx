@@ -1,12 +1,12 @@
 import { useForm } from '@tanstack/react-form'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Mail, Lock, User, Phone } from 'lucide-react'
+import { Mail, Lock, User, Phone, Building2, MapPin } from 'lucide-react'
 import AuthTitle from '@/components/auth/auth-title'
 import AuthWrapper from '@/components/auth/auth-wrapper'
 import FormInput from '@/components/ui/form/form-input'
 import { Button } from '@/components/ui/button'
 import { validators } from '@/helpers/validators'
-import { useRegister } from '@/stores/auth'
+import { useRegister, useRegisterVendor } from '@/stores/auth'
 import { toast } from '@/lib/toast'
 import { safeAsync } from '@/helpers/safe-sync'
 import { formatApiError } from '@/helpers/api-error'
@@ -26,7 +26,10 @@ const ACCOUNT_TYPES = [
 
 function RegisterPage() {
   const navigate = useNavigate()
-  const { mutateAsync: register, isPending } = useRegister()
+  const { mutateAsync: register, isPending: isPersonalPending } = useRegister()
+  const { mutateAsync: registerVendor, isPending: isVendorPending } = useRegisterVendor()
+
+  const isPending = isPersonalPending || isVendorPending
 
   const form = useForm({
     defaultValues: {
@@ -37,6 +40,11 @@ function RegisterPage() {
       phone: '',
       password: '',
       confirm_password: '',
+      vendorName: '',
+      vendorDescription: '',
+      contactEmail: '',
+      contactPhone: '',
+      address: '',
     },
     onSubmit: async ({ value }) => {
       if (value.password !== value.confirm_password) {
@@ -44,23 +52,48 @@ function RegisterPage() {
         return
       }
 
-      const [_, error] = await safeAsync(() =>
-        register({
-          type: value.type,
-          firstName: value.firstName,
-          lastName: value.lastName,
-          email: value.email,
-          phone: value.phone || undefined,
-          password: value.password,
-        }),
-      )
+      if (value.type === 'business') {
+        const [_, error] = await safeAsync(() =>
+          registerVendor({
+            firstName: value.firstName,
+            lastName: value.lastName,
+            email: value.email,
+            phone: value.phone,
+            password: value.password,
+            vendorName: value.vendorName,
+            vendorDescription: value.vendorDescription,
+            contactEmail: value.contactEmail,
+            contactPhone: value.contactPhone,
+            address: value.address,
+          }),
+        )
 
-      if (error) {
-        toast.error({
-          title: 'Registration Failed',
-          description: formatApiError(error as ApiError),
-        })
-        return
+        if (error) {
+          toast.error({
+            title: 'Registration Failed',
+            description: formatApiError(error as ApiError),
+          })
+          return
+        }
+      } else {
+        const [_, error] = await safeAsync(() =>
+          register({
+            type: value.type,
+            firstName: value.firstName,
+            lastName: value.lastName,
+            email: value.email,
+            phone: value.phone || undefined,
+            password: value.password,
+          }),
+        )
+
+        if (error) {
+          toast.error({
+            title: 'Registration Failed',
+            description: formatApiError(error as ApiError),
+          })
+          return
+        }
       }
 
       navigate({ to: '/auth/verify' })
@@ -151,6 +184,62 @@ function RegisterPage() {
           required
         />
 
+        <form.Subscribe selector={(s) => s.values.type}>
+          {(type) =>
+            type === 'business' && (
+              <>
+                <FormInput
+                  form={form}
+                  name="vendorName"
+                  label="Business name"
+                  placeholder="Acme Ltd."
+                  validator={validators.required('Business name')}
+                  leftIcon={<Building2 size={16} />}
+                  required
+                />
+                <FormInput
+                  form={form}
+                  name="vendorDescription"
+                  label="Business description"
+                  placeholder="What does your business do?"
+                  validator={validators.required('Business description')}
+                  leftIcon={<Building2 size={16} />}
+                  required
+                />
+                <FormInput
+                  form={form}
+                  name="contactEmail"
+                  label="Business contact email"
+                  type="email"
+                  placeholder="contact@business.com"
+                  validator={validators.email}
+                  leftIcon={<Mail size={16} />}
+                  required
+                />
+                <FormInput
+                  form={form}
+                  name="contactPhone"
+                  label="Business contact phone"
+                  type="tel"
+                  placeholder="+234 800 000 0000"
+                  validator={validators.phone}
+                  leftIcon={<Phone size={16} />}
+                  required
+                />
+                <FormInput
+                  form={form}
+                  name="address"
+                  label="Business address"
+                  placeholder="123 Main Street, Lagos"
+                  validator={validators.required('Business address')}
+                  leftIcon={<MapPin size={16} />}
+                  required
+                />
+              </>
+            )
+          }
+        </form.Subscribe>
+
         <FormInput
           form={form}
           name="password"
@@ -184,22 +273,33 @@ function RegisterPage() {
         </form.Subscribe>
 
         <form.Subscribe selector={(s) => s.values}>
-          {(values) => (
-            <Button
-              type="submit"
-              disabled={
-                !values.email ||
-                !isPasswordValid(values.password) ||
-                !values.firstName ||
-                !values.lastName ||
-                values.password !== values.confirm_password ||
-                isPending
-              }
-              className="w-full mt-1"
-            >
-              {isPending ? 'Creating account…' : 'Create Account'}
-            </Button>
-          )}
+          {(values) => {
+            const isBusinessIncomplete =
+              values.type === 'business' &&
+              (!values.vendorName ||
+                !values.vendorDescription ||
+                !values.contactEmail ||
+                !values.contactPhone ||
+                !values.address)
+
+            return (
+              <Button
+                type="submit"
+                disabled={
+                  !values.email ||
+                  !isPasswordValid(values.password) ||
+                  !values.firstName ||
+                  !values.lastName ||
+                  values.password !== values.confirm_password ||
+                  isBusinessIncomplete ||
+                  isPending
+                }
+                className="w-full mt-1"
+              >
+                {isPending ? 'Creating account…' : 'Create Account'}
+              </Button>
+            )
+          }}
         </form.Subscribe>
       </form>
 

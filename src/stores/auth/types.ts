@@ -38,6 +38,19 @@ export interface RegisterPayload {
   companyPhone?: string
 }
 
+export interface RegisterVendorPayload {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  password: string
+  vendorName: string
+  vendorDescription: string
+  contactEmail: string
+  contactPhone: string
+  address: string
+}
+
 export interface RegisterResponse {
   data: {
     user: User

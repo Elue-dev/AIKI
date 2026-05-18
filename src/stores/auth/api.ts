@@ -5,6 +5,7 @@ import type {
   RefreshResponse,
   MeResponse,
   RegisterPayload,
+  RegisterVendorPayload,
   RegisterResponse,
   ForgotPasswordPayload,
   ResetPasswordPayload,
@@ -14,6 +15,9 @@ import type {
 
 export const register = (payload: RegisterPayload): Promise<RegisterResponse> =>
   client.post('/auth/register/client', payload)
+
+export const registerVendor = (payload: RegisterVendorPayload): Promise<RegisterResponse> =>
+  client.post('/auth/register/vendor', payload)
 
 export const login = (payload: LoginPayload): Promise<LoginResponse> =>
   client.post('/auth/login', payload)
