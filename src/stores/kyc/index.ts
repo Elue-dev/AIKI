@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   deleteKycDocument,
   getKycStatus,
-  registerKycDocument,
+  uploadKycDocument,
   startKyc,
   submitKyc,
   submitKycStep,
@@ -53,7 +53,7 @@ export function useSubmitKycStep(options?: { silent?: boolean }) {
 export function useRegisterKycDocument(options?: { silent?: boolean }) {
   return useMutation({
     mutationFn: (payload: KycDocumentPayload) =>
-      withSlowRequestTracking(() => registerKycDocument(payload), options),
+      withSlowRequestTracking(() => uploadKycDocument(payload), options),
   })
 }
 

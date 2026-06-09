@@ -10,6 +10,7 @@ import {
   useKycStatus,
 } from '@/stores/kyc'
 import type { KycDocumentType } from '@/stores/kyc/types'
+import { useAuthStore } from '@/stores/auth'
 import { useLoaderStore } from '@/stores/loader'
 import { useForm } from '@tanstack/react-form'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -17,7 +18,7 @@ import { CircleX, AlertCircle, CheckCircle2, Info, XCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/button'
 import { AppSheet } from '../ui/app-sheet'
-import { TypeToggle, type AssessmentType } from './common/type-toggle'
+import type { AssessmentType } from './common/type-toggle'
 import { GuarantorDirectorSignatory } from './steps/business.tsx/gurantor-director-signatory'
 import { OperationsAndContracts } from './steps/business.tsx/operation-contracts'
 import { BasicDetails } from './steps/personal/basic-details'
@@ -97,6 +98,10 @@ export function KYCVerificationSheet({
   open,
   onOpenChange,
 }: KYCVerificationSheetProps) {
+  const user = useAuthStore((s) => s.user)
+  const roleType: AssessmentType =
+    user?.role === 'PERSONAL_CLIENT' ? 'Personal' : 'Business'
+
   const [assessmentType, setAssessmentType] =
     useState<AssessmentType>('Personal')
   const [step, setStep] = useState(1)
@@ -137,6 +142,7 @@ export function KYCVerificationSheet({
       setTradeRefs([{ name: '', phone: '' }])
       return
     }
+    setAssessmentType(roleType)
     refetchKyc()
   }, [open])
 
@@ -221,13 +227,10 @@ export function KYCVerificationSheet({
   const uploadDoc = async (type: string, file: File, docStep: number) => {
     if (!kycSubmissionId) throw new Error('Submission not started yet')
     const res = await registerDocument({
+      file,
       kycSubmissionId,
       type: type as KycDocumentType,
       step: docStep,
-      fileName: file.name,
-      fileSize: file.size,
-      mimeType: file.type || 'application/octet-stream',
-      storageKey: file.name,
     })
     setUploadedDocs((prev) => ({
       ...prev,
@@ -391,16 +394,9 @@ export function KYCVerificationSheet({
     setStep((s) => Math.max(1, s - 1))
   }
 
-  const handleTypeChange = (t: AssessmentType) => {
-    setAssessmentType(t)
-    setStep(1)
-    setMaxReachedStep(1)
-    setUploadedDocs({})
-  }
-
   const handleClose = () => {
     onOpenChange(false)
-    setAssessmentType('Personal')
+    setAssessmentType(roleType)
     setStep(1)
     setMaxReachedStep(1)
     setUploadedDocs({})
@@ -469,12 +465,6 @@ export function KYCVerificationSheet({
           ID, and a selfie. Your information is encrypted and processed
           securely.
         </p>
-        <TypeToggle
-          value={assessmentType}
-          onChange={handleTypeChange}
-          disabled={!!kycSubmission}
-        />
-
         {/* Step indicator */}
         <div className="flex items-center mt-4">
           {Array.from({ length: totalSteps }, (_, i) => {

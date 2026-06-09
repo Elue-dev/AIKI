@@ -1,5 +1,7 @@
 import client from '@/lib/client'
 import type { ApiEnvelope, KycStatusResponse, KycSubmission, KycDocument, KycDocumentPayload } from './types'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
 export const getKycStatus = (): Promise<ApiEnvelope<KycStatusResponse>> =>
   client.get('/client/kyc')
@@ -13,9 +15,20 @@ export const submitKycStep = (
   data: Record<string, unknown>,
 ): Promise<ApiEnvelope<KycSubmission>> => client.put(`/client/kyc/step/${stepNumber}`, { data })
 
-/** Registers document metadata (JSON) after the file has been stored. */
-export const registerKycDocument = (payload: KycDocumentPayload): Promise<ApiEnvelope<KycDocument>> =>
-  client.post('/client/kyc/documents', payload)
+export const uploadKycDocument = ({ file, kycSubmissionId, type, step }: KycDocumentPayload): Promise<ApiEnvelope<KycDocument>> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('kycSubmissionId', kycSubmissionId)
+  formData.append('type', type)
+  formData.append('step', String(step))
+
+  const token = useAuthStore.getState().accessToken
+  return axios.post(
+    `${import.meta.env.VITE_API_BASE_URL}/client/kyc/documents`,
+    formData,
+    { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } },
+  ).then((res) => res.data)
+}
 
 export const deleteKycDocument = (id: string): Promise<void> =>
   client.del(`/client/kyc/documents/${id}`)

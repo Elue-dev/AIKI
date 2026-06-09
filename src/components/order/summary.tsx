@@ -161,7 +161,13 @@ export function SummaryScreen({
               <SelectValue placeholder="Select tenure" />
             </SelectTrigger>
             <SelectContent>
-              {['3', '6', '12', '18', '24', '36'].map((m) => (
+              {/*{['3', '6', '12', '18', '24', '36'].map((m) => (
+                <SelectItem key={m} value={m}>
+                  {m} months
+                </SelectItem>
+              ))}*/}
+
+              {['6', '12'].map((m) => (
                 <SelectItem key={m} value={m}>
                   {m} months
                 </SelectItem>
@@ -248,7 +254,7 @@ export function SummaryScreen({
           )}
         </div>
 
-        <div className="bg-background rounded-2xl border border-gray-100 px-5 py-4">
+        {/*<div className="bg-background rounded-2xl border border-gray-100 px-5 py-4">
           <p className="text-[16px] font-semibold text-black mb-3">
             Deposit account details
           </p>
@@ -275,7 +281,7 @@ export function SummaryScreen({
               </div>
             </div>
           </div>
-        </div>
+        </div>*/}
 
         <div className="bg-white rounded-2xl px-5 py-4">
           <label className="flex items-start gap-3 cursor-pointer">
@@ -298,7 +304,9 @@ export function SummaryScreen({
 
       <div className="bg-white px-6 py-4 border-t border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between shrink-0">
         <div className="bg-white rounded-2xl px-5 py-4">
-          <p className="text-[14px] font-semibold text-black">Available credit</p>
+          <p className="text-[14px] font-semibold text-black">
+            Available credit
+          </p>
           <p className="text-[24px] font-semibold text-black">
             {creditLimit ? fmtNGN(creditLimit.availableLimitKobo) : '—'}
           </p>

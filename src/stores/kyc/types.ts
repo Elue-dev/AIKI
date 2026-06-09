@@ -96,13 +96,10 @@ export interface ApiEnvelope<T> {
 }
 
 export interface KycDocumentPayload {
+  file: File
   kycSubmissionId: string
   type: KycDocumentType
   step: number
-  fileName: string
-  fileSize: number
-  mimeType: string
-  storageKey: string
 }
 
 export type KycDocumentType =

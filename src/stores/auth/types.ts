@@ -46,9 +46,9 @@ export interface RegisterVendorPayload {
   password: string
   vendorName: string
   vendorDescription: string
-  contactEmail: string
-  contactPhone: string
-  address: string
+  contactEmail?: string
+  contactPhone?: string
+  address?: string
 }
 
 export interface RegisterResponse {
@@ -92,26 +92,43 @@ export interface RefreshResponse {
 
 export interface CreditLimit {
   id: string
+  personalProfileId: string | null
+  businessClientId: string | null
   totalLimitKobo: number
   usedLimitKobo: number
   availableLimitKobo: number
+  assignedByAdminId: string
   assignedAt: string
+  lastUpdatedByAdminId: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface PersonalProfile {
   id: string
-  bvn?: string | null
-  dateOfBirth?: string | null
-  residentialAddress?: string | null
-  employerName?: string | null
-  employerAddress?: string | null
-  monthsInRole?: number | null
-  grossMonthlySalary?: number | null
-  netMonthlySalary?: number | null
-  hrContactName?: string | null
-  hrContactPhone?: string | null
-  bankName?: string | null
-  bankAccountNumber?: string | null
+  userId: string
+  bvn: string | null
+  dateOfBirth: string | null
+  residentialAddress: string | null
+  alternatePhone: string | null
+  alternateEmail: string | null
+  employerName: string | null
+  employerAddress: string | null
+  monthsInRole: number | null
+  grossMonthlySalary: number | null
+  netMonthlySalary: number | null
+  hrContactName: string | null
+  hrContactPhone: string | null
+  hrContactEmail: string | null
+  monthlyRent: number | null
+  existingLoanAmount: number | null
+  numberOfDependants: number | null
+  otherMonthlyObligations: number | null
+  bankName: string | null
+  bankAccountNumber: string | null
+  nin: string | null
+  createdAt: string
+  updatedAt: string
   creditLimit: CreditLimit | null
 }
 
@@ -125,6 +142,7 @@ export interface MeData {
 }
 
 export interface MeResponse {
+  success: boolean
   data: MeData
 }
 

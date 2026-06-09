@@ -32,12 +32,19 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ user }),
       setPendingEmail: (email) => set({ pendingEmail: email }),
       setPendingVerification: (email, token, refreshToken) =>
-        set({ pendingEmail: email, pendingToken: token, pendingRefreshToken: refreshToken ?? null }),
+        set({
+          pendingEmail: email,
+          pendingToken: token,
+          pendingRefreshToken: refreshToken ?? null,
+        }),
       confirmVerified: () =>
         set((s) => ({
           // only promote pending tokens when we're not already authenticated
           ...(s.pendingToken
-            ? { accessToken: s.pendingToken, refreshToken: s.pendingRefreshToken }
+            ? {
+                accessToken: s.pendingToken,
+                refreshToken: s.pendingRefreshToken,
+              }
             : {}),
           isAuthenticated: true,
           pendingEmail: null,
@@ -94,14 +101,17 @@ export function useLogin() {
       withSlowRequestTracking(() => authApi.login(payload)),
     onSuccess: (res) => {
       const user = res?.data?.user
-      if (!user) throw new Error('Unable to reach the server. Please check your connection and try again.')
-      if (user.role !== 'PERSONAL_CLIENT') {
-        throw new Error(
-          user.role === 'VENDOR' || user.role === 'VENDOR_EMPLOYEE'
-            ? 'This account is a merchant account. Please use the merchant dashboard to sign in.'
-            : 'Your account is not authorized to access this app.',
-        )
-      }
+      // if (!user)
+      //   throw new Error(
+      //     'Unable to reach the server. Please check your connection and try again.',
+      //   )
+      // if (user.role !== 'PERSONAL_CLIENT') {
+      //   throw new Error(
+      //     user.role === 'VENDOR' || user.role === 'VENDOR_EMPLOYEE'
+      //       ? 'This account is a merchant account. Please use the merchant dashboard to sign in.'
+      //       : 'Your account is not authorized to access this app.',
+      //   )
+      // }
       setTokens(res.data.accessToken, res.data.refreshToken)
       setUser(user)
     },
