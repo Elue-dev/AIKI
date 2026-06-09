@@ -418,9 +418,7 @@ export function KYCVerificationSheet({
         icon: <AlertCircle size={16} className="shrink-0 text-orange-500" />,
         bg: 'bg-orange-50 border-orange-200',
         text: 'text-orange-800',
-        message: kycSubmission?.reviewNote
-          ? `Additional information required: ${kycSubmission.reviewNote}. Please update your details and resubmit.`
-          : 'Our team needs more information from you. Please review and update your submission below.',
+        message: kycSubmission?.reviewNote ?? null,
       }
     : isUnderReview
     ? {
@@ -535,7 +533,20 @@ export function KYCVerificationSheet({
             className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 mb-4 text-sm ${statusBanner.bg}`}
           >
             {statusBanner.icon}
-            <p className={statusBanner.text}>{statusBanner.message}</p>
+            <div className={statusBanner.text}>
+              {isRequiresMoreInfo ? (
+                <>
+                  <p className="font-medium mb-1">Additional information required</p>
+                  {statusBanner.message ? (
+                    <p className="italic">"{statusBanner.message}"</p>
+                  ) : (
+                    <p>Please review and update your submission below, then resubmit.</p>
+                  )}
+                </>
+              ) : (
+                <p>{statusBanner.message as string}</p>
+              )}
+            </div>
           </div>
         )}
         <AnimatePresence mode="wait" custom={direction}>
