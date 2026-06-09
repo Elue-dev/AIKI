@@ -65,7 +65,7 @@ export interface BusinessSteps {
 
 /** The inner `data` object returned by GET /kyc */
 export interface KycStatusResponse {
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'REQUIRES_MORE_INFO' | 'VERIFIED'
   submission: KycSubmission | null
 }
 
@@ -74,7 +74,7 @@ export interface KycSubmission {
   id: string
   userId: string
   type: 'PERSONAL' | 'BUSINESS'
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'REQUIRES_MORE_INFO' | 'VERIFIED'
   currentStep: number
   totalSteps: number
   /** Step data — each key is a step index, value is the field data for that step */

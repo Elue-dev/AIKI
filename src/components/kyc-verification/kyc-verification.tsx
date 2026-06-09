@@ -408,10 +408,21 @@ export function KYCVerificationSheet({
   const isApproved = kycStatus === 'APPROVED' || kycStatus === 'VERIFIED'
   const isRejected = kycStatus === 'REJECTED'
   const isSubmitted = kycStatus === 'SUBMITTED'
+  const isRequiresMoreInfo = kycStatus === 'REQUIRES_MORE_INFO'
 
-  const kycLocked = !!kycStatus && kycStatus !== 'IN_PROGRESS'
+  const kycLocked =
+    !!kycStatus && kycStatus !== 'IN_PROGRESS' && kycStatus !== 'REQUIRES_MORE_INFO'
 
-  const statusBanner = isUnderReview
+  const statusBanner = isRequiresMoreInfo
+    ? {
+        icon: <AlertCircle size={16} className="shrink-0 text-orange-500" />,
+        bg: 'bg-orange-50 border-orange-200',
+        text: 'text-orange-800',
+        message: kycSubmission?.reviewNote
+          ? `Additional information required: ${kycSubmission.reviewNote}. Please update your details and resubmit.`
+          : 'Our team needs more information from you. Please review and update your submission below.',
+      }
+    : isUnderReview
     ? {
         icon: <AlertCircle size={16} className="shrink-0 text-amber-500" />,
         bg: 'bg-amber-50 border-amber-200',
